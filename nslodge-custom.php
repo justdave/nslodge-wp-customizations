@@ -33,3 +33,4 @@ require_once("includes/election-calendar-utils.php");
 require_once("includes/issues-widget.php");
 require_once("includes/merge-candidates.php");
 require_once("includes/approve-adults.php");
+require_once("includes/election-dashboard.php");
