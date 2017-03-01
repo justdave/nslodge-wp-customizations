@@ -20,7 +20,7 @@
 // Add Shortcode
 function nslodge_ue_schedreqs( $attrs ) {
 
-    $min_date = strtotime("2015-11-01");
+    $min_date = strtotime("2016-10-01");
     $calendar_id = [
         "all" => 1732,
         1 => 1722,
@@ -38,6 +38,16 @@ function nslodge_ue_schedreqs( $attrs ) {
     );
 
     global $wpdb;
+    if ($chapter == 'all') {
+    $results = $wpdb->get_results($wpdb->prepare("SELECT Chapter, Troop, ReqDate, Priority FROM (
+SELECT ChapterNumber AS Chapter, tnum AS Troop, `e-date-1` AS ReqDate, '1' AS Priority FROM wp_oa_ue_schedules
+UNION
+SELECT ChapterNumber AS Chapter, tnum AS Troop, `e-date-2` AS ReqDate, '2' AS Priority FROM wp_oa_ue_schedules
+UNION
+SELECT ChapterNumber AS Chapter, tnum AS Troop, `e-date-3` AS ReqDate, '3' AS Priority FROM wp_oa_ue_schedules
+) AS sched
+ORDER BY ReqDate, Priority", array($chapter)));
+    } else {
     $results = $wpdb->get_results($wpdb->prepare("SELECT Chapter, Troop, ReqDate, Priority FROM (
 SELECT ChapterNumber AS Chapter, tnum AS Troop, `e-date-1` AS ReqDate, '1' AS Priority FROM wp_oa_ue_schedules
 UNION
@@ -47,6 +57,7 @@ SELECT ChapterNumber AS Chapter, tnum AS Troop, `e-date-3` AS ReqDate, '3' AS Pr
 ) AS sched
 WHERE Chapter=%d
 ORDER BY ReqDate, Priority", array($chapter)));
+    }
 
     $calendar = simcal_get_calendar($calendar_id[$chapter]);
     $events = $calendar->get_events()->from($min_date);
@@ -66,12 +77,16 @@ ORDER BY ReqDate, Priority", array($chapter)));
     }
     #$output = "<pre>" . var_dump_ret($troops) . "</pre>";
     $output = "";
-    $output .= "<table border=1><tr><th>Troop</th><th>Requested Date</th><th>Troop's Priority</th></tr>\n";
+    $output .= "<table border=1><tr>";
+    if ($chapter == 'all') { $output .= "<th>Chapter</th>"; }
+    $output .= "<th>Troop</th><th>Requested Date</th><th>Troop's Priority</th></tr>\n";
     foreach ($results as $row) {
         if (! in_array($row->Troop, array_keys($troops))) {
             $color = "";
             if (strtotime($row->ReqDate) < time()) { $color = ' style="color: red;"'; }
-            $output .= "<tr><td>" . htmlspecialchars($row->Troop) . "</td><td$color>" . htmlspecialchars($row->ReqDate) . "</td><td>" . htmlspecialchars($row->Priority) . "</td></tr>\n";
+            $output .= "<tr>";
+            if ($chapter == 'all') { $output .= "<td>" . htmlspecialchars($row->Chapter) . "</td>"; }
+            $output .= "<td>" . htmlspecialchars($row->Troop) . "</td><td$color>" . htmlspecialchars($row->ReqDate) . "</td><td>" . htmlspecialchars($row->Priority) . "</td></tr>\n";
         }
     }
     $output .= "</table>\n";
