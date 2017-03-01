@@ -17,9 +17,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-// Add Shortcode
-function nslodge_ue_schedreqs( $attrs ) {
-
+// Look up events for chapter
+function nslodge_ue_getelections($chapter) {
     $min_date = strtotime("2016-10-01");
     $calendar_id = [
         "all" => 1732,
@@ -31,6 +30,60 @@ function nslodge_ue_schedreqs( $attrs ) {
         6 => 1727,
         7 => 1730
     ];
+
+
+    $calendar = simcal_get_calendar($calendar_id[$chapter]);
+    $events = $calendar->get_events()->from($min_date);
+    $troops = [];
+    while ($this_day = $events->get_first()) {
+        $num = 0;
+        $num_events = count($this_day);
+        while ($num < $num_events) {
+            $this_event = $this_day[$num];
+            $title = $this_event->title;
+            $start = $this_event->start;
+            preg_match("/[Tt]roop (\d+)/",$title,$matches);
+            $troop = $matches[1];
+            $troops[$troop] = date("m/d/Y",$start);
+            $num += 1;
+        }
+    }
+    return $troops;
+}
+
+function nslodge_ue_getschedreqs($chapter) {
+    global $wpdb;
+    if ($chapter == 'all') {
+    $results = $wpdb->get_results($wpdb->prepare("SELECT Chapter, Troop, ReqDate, Priority FROM (
+SELECT ChapterNumber AS Chapter, tnum AS Troop, `e-date-1` AS ReqDate, '1' AS Priority FROM wp_oa_ue_schedules
+UNION
+SELECT ChapterNumber AS Chapter, tnum AS Troop, `e-date-2` AS ReqDate, '2' AS Priority FROM wp_oa_ue_schedules
+UNION
+SELECT ChapterNumber AS Chapter, tnum AS Troop, `e-date-3` AS ReqDate, '3' AS Priority FROM wp_oa_ue_schedules
+) AS sched
+ORDER BY ReqDate, Priority", array($chapter)));
+    } else {
+    $results = $wpdb->get_results($wpdb->prepare("SELECT Chapter, Troop, ReqDate, Priority FROM (
+SELECT ChapterNumber AS Chapter, tnum AS Troop, `e-date-1` AS ReqDate, '1' AS Priority FROM wp_oa_ue_schedules
+UNION
+SELECT ChapterNumber AS Chapter, tnum AS Troop, `e-date-2` AS ReqDate, '2' AS Priority FROM wp_oa_ue_schedules
+UNION
+SELECT ChapterNumber AS Chapter, tnum AS Troop, `e-date-3` AS ReqDate, '3' AS Priority FROM wp_oa_ue_schedules
+) AS sched
+WHERE Chapter=%d
+ORDER BY ReqDate, Priority", array($chapter)));
+    }
+    $schedreqs = [];
+
+    foreach ($results as $row) {
+        $schedreqs[$row->Chapter][$row->Troop][$row->Priority] = $row->ReqDate;
+    }
+    return $schedreqs;
+}
+
+// Add Shortcode
+function nslodge_ue_schedreqs( $attrs ) {
+
     extract( shortcode_atts(
         array(
             'chapter' => 'all',
@@ -59,22 +112,8 @@ WHERE Chapter=%d
 ORDER BY ReqDate, Priority", array($chapter)));
     }
 
-    $calendar = simcal_get_calendar($calendar_id[$chapter]);
-    $events = $calendar->get_events()->from($min_date);
-    $troops = [];
-    while ($this_day = $events->get_first()) {
-        $num = 0;
-        $num_events = count($this_day);
-        while ($num < $num_events) {
-            $this_event = $this_day[$num];
-            $title = $this_event->title;
-            $start = $this_event->start;
-            preg_match("/[Tt]roop (\d+)/",$title,$matches);
-            $troop = $matches[1];
-            $troops[$troop] = date("m/d/Y",$start);
-            $num += 1;
-        }
-    }
+    $troops = nslodge_ue_getelections($chapter);
+
     #$output = "<pre>" . var_dump_ret($troops) . "</pre>";
     $output = "";
     $output .= "<table border=1><tr>";
