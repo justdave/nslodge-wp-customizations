@@ -32,10 +32,73 @@ function my_enqueue($hook) {
 
 function ns_election_widget() {
     global $wpdb;
-    $results = $wpdb->get_results("select b.chapter_num as chapter, greatest(0, count(distinct a.UnitNumber)) as number_submitted, count(distinct c.unit_num) as num_troops from wp_oa_chapters b left join wp_oa_ue_troops a on binary concat(0, b.chapter_num, ' - ', b.ChapterName) = binary a.ChapterName left join wp_oa_troops c on b.chapter_num = c.chapter_num group by c.chapter_num order by c.chapter_num");
+    // $results = $wpdb->get_results("select b.chapter_num as chapter, greatest(0, count(distinct a.UnitNumber)) as number_submitted, count(distinct c.unit_num) as num_troops from wp_oa_chapters b left join wp_oa_ue_troops a on binary concat(0, b.chapter_num, ' - ', b.ChapterName) = binary a.ChapterName left join wp_oa_troops c on b.chapter_num = c.chapter_num group by c.chapter_num order by c.chapter_num");
     if (is_admin()) {
         ?><a href="/ue/dashboard">Go to Unit Elections Dashboard</a><br><?php
     }
+    $results = $wpdb->get_results("
+SELECT
+    trp.chapter_num AS chapter,
+    trp.unit_num AS troop,
+    COUNT(rpts.UnitNumber) AS num_reports,
+    COUNT(sch.tnum) AS num_reqs
+FROM
+    wp_nslodge_org.wp_oa_troops AS trp
+    LEFT JOIN wp_oa_chapters AS chp ON BINARY trp.chapter_num = BINARY chp.chapter_num
+    LEFT JOIN wp_oa_ue_troops AS rpts ON BINARY CONCAT('0', chp.chapter_num, ' - ', chp.ChapterName) = BINARY rpts.ChapterName AND BINARY trp.unit_num = BINARY rpts.UnitNumber
+    LEFT JOIN wp_oa_ue_schedules AS sch ON BINARY trp.chapter_num = BINARY sch.ChapterNumber AND BINARY trp.unit_num = BINARY sch.tnum
+GROUP BY trp.chapter_num, trp.unit_num
+ORDER BY trp.chapter_num, trp.unit_num
+");
+
+    $completed = [];
+    $scheduled = [];
+    $requested = [];
+    $num_troops = [];
+    $data = [];
+    $elecscheds = nslodge_ue_getelections('all');
+    foreach ($results AS $row) {
+        if (!array_key_exists($row->chapter, $completed)) {
+            $completed[$row->chapter] = 0;
+        }
+        if (!array_key_exists($row->chapter, $scheduled)) {
+            $scheduled[$row->chapter] = 0;
+        }
+        if (!array_key_exists($row->chapter, $requested)) {
+            $requested[$row->chapter] = 0;
+        }
+        if (!array_key_exists($row->chapter, $num_troops)) {
+            $num_troops[$row->chapter] = 0;
+        }
+        if (!array_key_exists($row->chapter, $data)) {
+            $data[$row->chapter] = [];
+        }
+        if (!array_key_exists($row->troop, $data[$row->chapter])) {
+            $data[$row->chapter][$row->troop] = [];
+        }
+        $data[$row->chapter][$row->troop]['num_reports'] = $row->num_reports;
+        if ($row->num_reports > 1) {
+            $completed[$row->chapter] = $completed[$row->chapter] + 1;
+        }
+        $data[$row->chapter][$row->troop]['num_reqs'] = $row->num_reqs;
+        if ($row->num_reqs > 1) {
+            $requested[$row->chapter] = $requested[$row->chapter] + 1;
+        }
+        $data[$row->chapter][$row->troop]['scheduled'] = 0;
+        if ((array_key_exists($row->chapter, $elecscheds)) &&
+             (array_key_exists($row->troop, $elecscheds[$row->chapter]))) {
+            $data[$row->chapter][$row->troop]['scheduled'] = 1;
+        }
+        if ($data[$row->chapter][$row->troop]['num_reports'] > 0) {
+            $completed[$row->chapter] = $completed[$row->chapter] + 1;
+        } else if ($data[$row->chapter][$row->troop]['scheduled'] > 0) {
+            $scheduled[$row->chapter] = $scheduled[$row->chapter] + 1;
+        } else if ($data[$row->chapter][$row->troop]['num_reqs'] > 0) {
+            $requested[$row->chapter] = $requested[$row->chapter] + 1;
+        }
+        $num_troops[$row->chapter] = $num_troops[$row->chapter] + 1;
+    }
+
     ?>
 <canvas id="nsElectionChart" width="200" height="100"></canvas>
 <script type="text/javascript">
@@ -44,51 +107,84 @@ var ue_chartconfig = {
     type: 'horizontalBar',
     data: {
         labels: ["Chapter 1", "Chapter 2", "Chapter 3", "Chapter 4", "Chapter 5", "Chapter 6", "Chapter 7", "Entire Lodge"],
-        datasets: [{
-            label: '% Complete',
+        datasets: [
+        {
+            label: 'Complete',
             data: [<?php
             $completed_troops = 0;
             $total_troops = 0;
-            foreach ($results as $row) {
+            foreach (array_keys($completed) AS $key) {
                 if ($total_troops > 0) { echo ","; };
-                $this_completed = $row->number_submitted;
-                $this_total = $row->num_troops;
-                echo htmlspecialchars(ceil(($row->number_submitted / $row->num_troops) * 100));
-                $completed_troops = $completed_troops + $row->number_submitted;
-                $total_troops = $total_troops + $row->num_troops;
+                $this_completed = $completed[$key];
+                $this_total = $num_troops[$key];
+                echo htmlspecialchars(ceil(($completed[$key] / $num_troops[$key]) * 100));
+                $completed_troops = $completed_troops + $completed[$key];
+                $total_troops = $total_troops + $num_troops[$key];
             }
             echo "," . htmlspecialchars(ceil(($completed_troops / $total_troops) * 100));
             ?>],
-            backgroundColor: [
-                'rgba(75, 192, 192, 0.2)',
-                'rgba(75, 192, 192, 0.2)',
-                'rgba(75, 192, 192, 0.2)',
-                'rgba(75, 192, 192, 0.2)',
-                'rgba(75, 192, 192, 0.2)',
-                'rgba(75, 192, 192, 0.2)',
-                'rgba(75, 192, 192, 0.2)',
-                'rgba(75, 128, 128, 0.2)'
-            ],
-            borderColor: [
-                'rgba(75, 192, 192, 1)',
-                'rgba(75, 192, 192, 1)',
-                'rgba(75, 192, 192, 1)',
-                'rgba(75, 192, 192, 1)',
-                'rgba(75, 192, 192, 1)',
-                'rgba(75, 192, 192, 1)',
-                'rgba(75, 192, 192, 1)',
-                'rgba(75, 128, 128, 1)'
-            ],
+            backgroundColor: 'rgba(0, 224, 255, 0.2)',
+            borderColor: 'rgba(0, 224, 255, 1)',
             borderWidth: 1
-        }]
+        },
+        {
+            label: "Scheduled",
+            data: [<?php
+            $scheduled_troops = 0;
+            $total_troops = 0;
+            foreach (array_keys($scheduled) AS $key) {
+                if ($total_troops > 0) { echo ","; };
+                $this_scheduled = $scheduled[$key];
+                $this_total = $num_troops[$key];
+                echo htmlspecialchars(ceil(($scheduled[$key] / $num_troops[$key]) * 100));
+                $scheduled_troops = $scheduled_troops + $scheduled[$key];
+                $total_troops = $total_troops + $num_troops[$key];
+            }
+            echo "," . htmlspecialchars(ceil(($scheduled_troops / $total_troops) * 100));
+            ?>],
+            backgroundColor: 'rgba(0, 220, 0, 0.2)',
+            borderColor: 'rgba(0, 220, 0, 1)',
+            borderWidth: 1
+        },
+        {
+            label: "Requested",
+            data: [<?php
+            $requested_troops = 0;
+            $total_troops = 0;
+            foreach (array_keys($requested) AS $key) {
+                if ($total_troops > 0) { echo ","; };
+                $this_requested = $requested[$key];
+                $this_total = $num_troops[$key];
+                echo htmlspecialchars(ceil(($requested[$key] / $num_troops[$key]) * 100));
+                $requested_troops = $requested_troops + $requested[$key];
+                $total_troops = $total_troops + $num_troops[$key];
+            }
+            echo "," . htmlspecialchars(ceil(($requested_troops / $total_troops) * 100));
+            ?>],
+            backgroundColor: 'rgba(255, 105, 9, 0.2)',
+            borderColor: 'rgba(255, 105, 9, 0.2)',
+            borderWidth: 1
+        }
+        ]
     },
     options: {
+        tooltips: {
+            callbacks: {
+                label: function(tooltipitem, data) {
+                    return data.datasets[tooltipitem.datasetIndex].label + ": " + tooltipitem.xLabel + "%";
+                }
+            }
+        },
         scales: {
             xAxes: [{
+                stacked: true,
                 ticks: {
                     beginAtZero:true,
                     suggestedMax:100
                 }
+            }],
+            yAxes: [{
+                stacked: true
             }]
         }
     }
@@ -103,7 +199,7 @@ if ( is_admin() ) {
 }
 
 function ns_election_chartdata() {
-    alert("Foo!");
+    // alert("Foo!");
 }
 
 // Add Shortcodes
@@ -120,20 +216,22 @@ function nslodge_ue_dashboard( $attrs ) {
 add_shortcode( 'ue_dashboard', 'nslodge_ue_dashboard' );
 
 function nslodge_ue_dashboard_list_chapters() {
-    ns_election_widget();
     ?>
-<script type="text/javascript"><!--
-jQuery("#nsElectionChart").on('click', function (e) {
-var bars = ue_chart.getElementAtEvent(e);
-var ttips = ue_chart.tooltip._lastActive[0]._index
-alert(e.layerY);
-if (bars.length == 0) return;
-    var element = null;
-    element = bars[0];
-    if (element === null) return;
-    var labelElement, dataElement;
-    labelElement = ue_chartconfig.data.datasets[element._datasetIndex].label;
-});
---></script>
+    <div id="ue_links" style="float: left; margin-right: 1em;">
+    <h5>Public UE Links</h5>
+    <a href="https://nslodge.org/ue/report">Submit an election report</a><br>
+    <a href="https://nslodge.org/ue/adultnomination">Submit an Adult Nomination</a><br>
+    <a href="https://nslodge.org/ue/request">Request an election for a troop</a><br>
+    <a href="https://nslodge.org/ue/calendar">Lodge-wide Election Calendar</a>
+    <h5>Administrative UE Links</h5>
+    <a href="https://nslodge.org/ue/process-troops">Merge/Certify Election Results</a><br>
+    <a href="https://nslodge.org/ue/process-adults">Process Adult Nominations</a><br>
+    <a href="https://nslodge.org/ue/export-candidates">Export Youth Candidates to OALM</a><br>
+    <a href="https://nslodge.org/ue/export-adults">Export Adult Candidates to OALM</a>
+    </div>
+    <div id="ue_master_chart" style="width: 500px; float: right;"><h5 style="margin-top: 0pm;">Unit Election Status</h5><?php
+    ns_election_widget();
+    ?></div>
+    <div style="clear: both;"></div>
     <?php
 }

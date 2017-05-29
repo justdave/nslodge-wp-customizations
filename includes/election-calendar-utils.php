@@ -17,8 +17,13 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+use SimpleCalendar\Plugin;
+
 // Look up events for chapter
 function nslodge_ue_getelections($chapter) {
+    if (is_admin()) {
+        new SimpleCalendar\Assets();
+    }
     $min_date = strtotime("2016-10-01");
     $calendar_id = [
         "all" => 1732,
@@ -34,7 +39,7 @@ function nslodge_ue_getelections($chapter) {
 
     $calendar = simcal_get_calendar($calendar_id[$chapter]);
     $events = $calendar->get_events()->from($min_date);
-    $troops = [];
+    $elecscheds = [];
     while ($this_day = $events->get_first()) {
         $num = 0;
         $num_events = count($this_day);
@@ -42,13 +47,18 @@ function nslodge_ue_getelections($chapter) {
             $this_event = $this_day[$num];
             $title = $this_event->title;
             $start = $this_event->start;
+            preg_match("/[Cc]hapter (\d+)/",$title,$matches);
+            $this_chapter = $matches[1];
             preg_match("/[Tt]roop (\d+)/",$title,$matches);
             $troop = $matches[1];
-            $troops[$troop] = date("m/d/Y",$start);
+            if (!array_key_exists($this_chapter, $elecscheds)) {
+                $elecscheds[$this_chapter] = [];
+            }
+            $elecscheds[$this_chapter][$troop] = date("m/d/Y",$start);
             $num += 1;
         }
     }
-    return $troops;
+    return $elecscheds;
 }
 
 function nslodge_ue_getschedreqs($chapter) {
@@ -112,7 +122,7 @@ WHERE Chapter=%d
 ORDER BY ReqDate, Priority", array($chapter)));
     }
 
-    $troops = nslodge_ue_getelections($chapter);
+    $elecscheds = nslodge_ue_getelections($chapter);
 
     #$output = "<pre>" . var_dump_ret($troops) . "</pre>";
     $output = "";
@@ -120,7 +130,8 @@ ORDER BY ReqDate, Priority", array($chapter)));
     if ($chapter == 'all') { $output .= "<th>Chapter</th>"; }
     $output .= "<th>Troop</th><th>Requested Date</th><th>Troop's Priority</th></tr>\n";
     foreach ($results as $row) {
-        if (! in_array($row->Troop, array_keys($troops))) {
+        if ((array_key_exists($row->Chapter, $elecscheds) ) &&
+            (! array_key_exists($row->Troop, $elecscheds[$row->Chapter]))) {
             $color = "";
             if (strtotime($row->ReqDate) < time()) { $color = ' style="color: red;"'; }
             $output .= "<tr>";
