@@ -299,7 +299,7 @@ function nslodge_ue_view_nomination() {
 <input type="hidden" id="ue_adult_troop" name="ue_adult_troop" value="' . esc_html($troop) . '">
 <input type="hidden" id="ue_adult_bsaid" name="ue_adult_bsaid" value="' . esc_html($bsaid) . '">
 ';
-    $nomination = $wpdb->get_row($wpdb->prepare("SELECT `" . join ("`, `",$nomination_columns) . "` FROM wp_oa_ue_adults WHERE ChapterName = %s AND UnitNumber = %s AND BSAMemberID = %s", $chapter, $troop, $bsaid));
+    $nomination = $wpdb->get_row($wpdb->prepare("SELECT `" . join ("`, `",$nomination_columns) . "` FROM wp_oa_ue_adults WHERE ChapterName = %s AND CAST(UnitNumber AS UNSIGNED) = %s AND BSAMemberID = %s", $chapter, $troop, $bsaid));
     $output .= '<table class="nomination_form">' . "\n";
     foreach ($nomination_columns as $column) {
         $output .= "<tr><th>" . esc_html($column) . "</th><td>" . esc_html($nomination->$column) . "</td></tr>\n";
