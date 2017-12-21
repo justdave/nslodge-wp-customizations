@@ -24,7 +24,7 @@ function nslodge_ue_getelections($chapter) {
     if (is_admin()) {
         new SimpleCalendar\Assets();
     }
-    $min_date = strtotime("2016-10-01");
+    $min_date = strtotime("2017-11-01");
     $calendar_id = [
         "all" => 1732,
         1 => 1722,
