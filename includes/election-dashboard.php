@@ -216,22 +216,60 @@ function nslodge_ue_dashboard( $attrs ) {
 add_shortcode( 'ue_dashboard', 'nslodge_ue_dashboard' );
 
 function nslodge_ue_dashboard_list_chapters() {
+    ob_start();
+    $user = wp_get_current_user();
+    $election_committee = 0;
+    $election_admin = 0;
+    if (( in_array( 'election_manager', (array) $user->roles ) ) ||
+        ( in_array( 'administrator',    (array) $user->roles ) )) {
+        $election_committee = 1;
+    }
+    if ( in_array( 'administrator',    (array) $user->roles ) ) {
+        $election_admin = 1;
+    }
     ?>
+    <div>
     <div id="ue_links" style="float: left; margin-right: 1em;">
-    <h5>Public UE Links</h5>
-    <a href="https://nslodge.org/ue/report">Submit an election report</a><br>
-    <a href="https://nslodge.org/ue/adultnomination">Submit an Adult Nomination</a><br>
-    <a href="https://nslodge.org/ue/request">Request an election for a troop</a><br>
-    <a href="https://nslodge.org/ue/calendar">Lodge-wide Election Calendar</a>
+    <h5><?php if ($election_committee) echo "Public "; ?>UE Links</h5>
+    <ul>
+    <?php if ($election_committee) { ?>
+    <li><a href="https://nslodge.org/ue/report">Submit an election report</a>
+    <li><a href="https://nslodge.org/ue/adultnomination">Submit an Adult Nomination</a>
+    <?php } ?>
+    <li><a href="https://nslodge.org/ue/request">Request an election for a troop</a>
+    <li><a href="https://nslodge.org/ue/calendar">Lodge-wide Election Calendar</a>
+    </ul>
+    <?php if (!$election_committee) { ?>
+    If you are a chapter chief or a<br>
+    member of the Lodge election team<br>
+    you can
+    <a href="<?php echo wp_login_url( get_permalink() ); ?>" title="Login">Login</a>
+    to see more information.<br>
+    <?php } ?>
+    <?php if ($election_admin) { ?>
     <h5>Administrative UE Links</h5>
-    <a href="https://nslodge.org/ue/process-troops">Merge/Certify Election Results</a><br>
-    <a href="https://nslodge.org/ue/process-adults">Process Adult Nominations</a><br>
-    <a href="https://nslodge.org/ue/export-candidates">Export Youth Candidates to OALM</a><br>
-    <a href="https://nslodge.org/ue/export-adults">Export Adult Candidates to OALM</a>
+    <ul>
+    <li><a href="https://nslodge.org/ue/process-troops">Merge/Certify Election Results</a>
+    <li><a href="https://nslodge.org/ue/process-adults">Process Adult Nominations</a>
+    <li><a href="https://nslodge.org/ue/export-candidates">Export Youth Candidates to OALM</a>
+    <li><a href="https://nslodge.org/ue/export-adults">Export Adult Candidates to OALM</a>
+    </ul>
+    <?php } ?>
     </div>
-    <div id="ue_master_chart" style="width: 500px; float: right;"><h5 style="margin-top: 0pm;">Unit Election Status</h5><?php
+    <div id="ue_master_chart" style="width: 500px; float: right;">
+    <h5 style="margin-top: 0px;">2017-2018 Unit Election Status</h5>
+    <?php
     ns_election_widget();
-    ?></div>
+    ?>
+    Elections should be scheduled by March 31st.<br>Makeup elections should be completed by April 30th.<br>
+    </div>
+    <div style="clear: both;"></div>
+    <?php if ($election_committee) { ?>
+    <div id="ue_election_requests" style="margin-top: 1em;">
+    <h5>Outstanding Unscheduled Election Requests</h5>
+    <?php echo nslodge_ue_schedreqs(); ?>
     <div style="clear: both;"></div>
     <?php
+    }
+    return ob_get_clean();
 }
