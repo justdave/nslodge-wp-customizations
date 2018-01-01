@@ -109,7 +109,7 @@ SELECT ChapterNumber AS Chapter, tnum AS Troop, `e-date-2` AS ReqDate, '2' AS Pr
 UNION
 SELECT ChapterNumber AS Chapter, tnum AS Troop, `e-date-3` AS ReqDate, '3' AS Priority FROM wp_oa_ue_schedules
 ) AS sched
-ORDER BY ReqDate, Priority", array($chapter)));
+ORDER BY ReqDate, Priority"));
     } else {
     $results = $wpdb->get_results($wpdb->prepare("SELECT Chapter, Troop, ReqDate, Priority FROM (
 SELECT ChapterNumber AS Chapter, tnum AS Troop, `e-date-1` AS ReqDate, '1' AS Priority FROM wp_oa_ue_schedules
@@ -130,13 +130,15 @@ ORDER BY ReqDate, Priority", array($chapter)));
     if ($chapter == 'all') { $output .= "<th>Chapter</th>"; }
     $output .= "<th>Troop</th><th>Requested Date</th><th>Troop's Priority</th></tr>\n";
     foreach ($results as $row) {
-        if ((array_key_exists($row->Chapter, $elecscheds) ) &&
-            (! array_key_exists($row->Troop, $elecscheds[$row->Chapter]))) {
+        if ( !(array_key_exists($row->Chapter, $elecscheds)) ||
+           ( (array_key_exists($row->Chapter, $elecscheds) ) &&
+             (! array_key_exists($row->Troop, $elecscheds[$row->Chapter]))
+           )) {
             $color = "";
             if (strtotime($row->ReqDate) < time()) { $color = ' style="color: red;"'; }
             $output .= "<tr>";
-            if ($chapter == 'all') { $output .= "<td>" . htmlspecialchars($row->Chapter) . "</td>"; }
-            $output .= "<td>" . htmlspecialchars($row->Troop) . "</td><td$color>" . htmlspecialchars($row->ReqDate) . "</td><td>" . htmlspecialchars($row->Priority) . "</td></tr>\n";
+        if ($chapter == 'all') { $output .= "<td>" . htmlspecialchars($row->Chapter) . "</td>"; }
+        $output .= "<td>" . htmlspecialchars($row->Troop) . "</td><td$color>" . htmlspecialchars($row->ReqDate) . "</td><td>" . htmlspecialchars($row->Priority) . "</td></tr>\n";
         }
     }
     $output .= "</table>\n";
