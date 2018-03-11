@@ -34,3 +34,13 @@ require_once("includes/issues-widget.php");
 require_once("includes/merge-candidates.php");
 require_once("includes/approve-adults.php");
 require_once("includes/election-dashboard.php");
+
+function ns_devsite_admin_theme_style() {
+    wp_enqueue_style('nslodge-admin-theme', plugins_url('wp-admin.css', __FILE__));
+}
+
+if (strpos(home_url(),"dev") !== false) {
+    # if the code reaches here we're on the dev site. Load the admin css on the
+    # admin pages so we can tell we're on the dev site.
+    add_action('admin_enqueue_scripts', 'ns_devsite_admin_theme_style');
+}
