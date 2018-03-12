@@ -209,15 +209,66 @@ function nslodge_ue_dashboard( $attrs ) {
     if (isset($_POST['ue_dashboard_action'])) {
         $action = $_POST['ue_dashboard_action'];
     }
+    if (isset($_GET['chapter'])) {
+        return nslodge_ue_dashboard_chapter();
+    }
 
     if ($action == "list_chapters") { return nslodge_ue_dashboard_list_chapters(); }
     return "<h4>Unknown action: " . esc_html($action) . "</h4>\n";
 }
 add_shortcode( 'ue_dashboard', 'nslodge_ue_dashboard' );
 
+function nslodge_ue_dashboard_chapter() {
+    global $wpdb;
+    $user = wp_get_current_user();
+    $election_committee = 0;
+    $election_admin = 0;
+    if (( in_array( 'election_manager', (array) $user->roles ) ) ||
+        ( in_array( 'administrator',    (array) $user->roles ) )) {
+        $election_committee = 1;
+    }
+    if ( in_array( 'administrator',    (array) $user->roles ) ) {
+        $election_admin = 1;
+    }
+    ob_start();
+    $chapter = $_GET['chapter'];
+    $chaptername = $wpdb->get_var($wpdb->prepare("SELECT ChapterName FROM wp_oa_chapters WHERE chapter_num = %d", Array($chapter)));
+    echo "<h2>Election information for Chapter " . htmlspecialchars($chapter) . " - " . htmlspecialchars($chaptername) . "</h2>\n";
+    if (!$election_committee) {
+        echo "<p>Please log in to an account with permission to view this data.</p>\n";
+    } else {
+        $results = $wpdb->get_results($wpdb->prepare("
+        SELECT id, COUNT(rpts.UnitNumber) AS reports, district_name, unit_num, sm_full_name, sm_phone_number, sm_email, sm_street, sm_city, sm_state, sm_zip_code
+        FROM wp_oa_troops AS tr
+        LEFT JOIN wp_oa_chapters AS ch ON tr.chapter_num = ch.chapter_num
+        LEFT JOIN wp_oa_districts AS di ON tr.district_num = di.district_num
+        LEFT JOIN wp_oa_ue_troops AS rpts ON BINARY CONCAT('0', ch.chapter_num, ' - ', ch.ChapterName) = BINARY rpts.ChapterName AND BINARY tr.unit_num = BINARY rpts.UnitNumber
+        where tr.chapter_num = %d
+        group by tr.district_num, tr.unit_num
+    ",
+        Array($chapter)));
+        echo '<table class="wp_table">';
+        echo "\n<tr><th>Reports Filed</th><th>District</th><th>Troop</th><th>Scoutmaster</th></tr>\n";
+        foreach ($results as $row) {
+            $rowcolor = 'transparent';
+            if ($row->reports > 0) {
+                $rowcolor = 'cyan';
+            }
+            echo '<tr style="background-color: ' . $rowcolor . '">';
+            foreach (Array('reports','district_name','unit_num','sm_full_name') as $item) {
+                echo "<td>" . htmlspecialchars($row->$item) . "</td>";
+            }
+            echo "</tr>\n";
+        }
+        echo "</table>\n";
+    }
+    return ob_get_clean();
+}
+
 function nslodge_ue_dashboard_list_chapters() {
     ob_start();
     $user = wp_get_current_user();
+    $homeurl = home_url();
     $election_committee = 0;
     $election_admin = 0;
     if (( in_array( 'election_manager', (array) $user->roles ) ) ||
@@ -233,11 +284,11 @@ function nslodge_ue_dashboard_list_chapters() {
     <h5><?php if ($election_committee) echo "Public "; ?>UE Links</h5>
     <ul>
     <?php if ($election_committee) { ?>
-    <li><a href="https://nslodge.org/ue/report">Submit an election report</a>
-    <li><a href="https://nslodge.org/ue/adultnomination">Submit an Adult Nomination</a>
+    <li><a href="<?php echo htmlspecialchars($homeurl) ?>/ue/report">Submit an election report</a>
+    <li><a href="<?php echo htmlspecialchars($homeurl) ?>/ue/adultnomination">Submit an Adult Nomination</a>
     <?php } ?>
-    <li><a href="https://nslodge.org/ue/request">Request an election for a troop</a>
-    <li><a href="https://nslodge.org/ue/calendar">Lodge-wide Election Calendar</a>
+    <li><a href="<?php echo htmlspecialchars($homeurl) ?>/ue/request">Request an election for a troop</a>
+    <li><a href="<?php echo htmlspecialchars($homeurl) ?>/ue/calendar">Lodge-wide Election Calendar</a>
     </ul>
     <?php if (!$election_committee) { ?>
     If you are a chapter chief or a<br>
@@ -249,10 +300,10 @@ function nslodge_ue_dashboard_list_chapters() {
     <?php if ($election_admin) { ?>
     <h5>Administrative UE Links</h5>
     <ul>
-    <li><a href="https://nslodge.org/ue/process-troops">Merge/Certify Election Results</a>
-    <li><a href="https://nslodge.org/ue/process-adults">Process Adult Nominations</a>
-    <li><a href="https://nslodge.org/ue/export-candidates">Export Youth Candidates to OALM</a>
-    <li><a href="https://nslodge.org/ue/export-adults">Export Adult Candidates to OALM</a>
+    <li><a href="<?php echo htmlspecialchars($homeurl) ?>/ue/process-troops">Merge/Certify Election Results</a>
+    <li><a href="<?php echo htmlspecialchars($homeurl) ?>/ue/process-adults">Process Adult Nominations</a>
+    <li><a href="<?php echo htmlspecialchars($homeurl) ?>/ue/export-candidates">Export Youth Candidates to OALM</a>
+    <li><a href="<?php echo htmlspecialchars($homeurl) ?>/ue/export-adults">Export Adult Candidates to OALM</a>
     </ul>
     <?php } ?>
     </div>
@@ -265,6 +316,15 @@ function nslodge_ue_dashboard_list_chapters() {
     </div>
     <div style="clear: both;"></div>
     <?php if ($election_committee) { ?>
+    <p>Chapter details:
+    <a href="<?php echo htmlspecialchars($homeurl) ?>/ue/dashboard?chapter=1">Chapter 1</a>
+    <a href="<?php echo htmlspecialchars($homeurl) ?>/ue/dashboard?chapter=2">Chapter 2</a>
+    <a href="<?php echo htmlspecialchars($homeurl) ?>/ue/dashboard?chapter=3">Chapter 3</a>
+    <a href="<?php echo htmlspecialchars($homeurl) ?>/ue/dashboard?chapter=4">Chapter 4</a>
+    <a href="<?php echo htmlspecialchars($homeurl) ?>/ue/dashboard?chapter=5">Chapter 5</a>
+    <a href="<?php echo htmlspecialchars($homeurl) ?>/ue/dashboard?chapter=6">Chapter 6</a>
+    <a href="<?php echo htmlspecialchars($homeurl) ?>/ue/dashboard?chapter=7">Chapter 7</a>
+    </p>
     <div id="ue_election_requests" style="margin-top: 1em;">
     <h5>Outstanding Unscheduled Election Requests</h5>
     <?php echo nslodge_ue_schedreqs(); ?>
