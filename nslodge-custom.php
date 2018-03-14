@@ -34,6 +34,7 @@ require_once("includes/issues-widget.php");
 require_once("includes/merge-candidates.php");
 require_once("includes/approve-adults.php");
 require_once("includes/election-dashboard.php");
+require_once("includes/ajax-calls.php");
 
 function ns_devsite_admin_theme_style() {
     wp_enqueue_style('nslodge-admin-theme', plugins_url('wp-admin.css', __FILE__));
