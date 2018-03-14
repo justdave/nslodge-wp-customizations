@@ -37,7 +37,7 @@ require_once("includes/election-dashboard.php");
 require_once("includes/ajax-calls.php");
 
 function ns_devsite_admin_theme_style() {
-    wp_enqueue_style('nslodge-admin-theme', plugins_url('wp-admin.css', __FILE__));
+    wp_enqueue_style('nslodge-admin-theme', plugins_url('css/wp-admin.css', __FILE__));
 }
 
 if (strpos(home_url(),"dev") !== false) {
