@@ -31,7 +31,7 @@ function ns_ue_ajax_enqueue_scripts() {
 }
 # handlers
 add_action( 'wp_ajax_ns_get_troops_autocomplete', 'ns_get_troops_autocomplete' );
-add_action( 'wp_ajax_nopriv_ns_get_troopsi_autocomplete', 'ns_get_troops_autocomplete' ); // need this to serve non logged in users
+add_action( 'wp_ajax_nopriv_ns_get_troops_autocomplete', 'ns_get_troops_autocomplete' ); // need this to serve non logged in users
 // THE FUNCTION
 function ns_get_troops_autocomplete() {
     global $wpdb;
