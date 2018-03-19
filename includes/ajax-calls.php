@@ -14,13 +14,19 @@ add_action( 'wp_enqueue_scripts', 'ns_ue_ajax_enqueue_scripts' );
 ns_write_log(__LINE__);
 function ns_ue_ajax_enqueue_scripts() {
     global $wp;
-    ns_write_log( "NSCUSTOM: requesturi = " . $wp->request );
     if ($_SERVER['REQUEST_URI'] == '/ue/report') {
         wp_enqueue_script('jquery-ui-autocomplete', '', array('jquery-ui-widget', 'jquery-ui-position'), '1.8.6');
         wp_enqueue_script( 'ns-report-troop', plugins_url('js/report-troop.js', dirname(__FILE__)), array( 'jquery', 'jquery-form', 'json2' ), false, true );
-        wp_enqueue_style( 'ns-report-troop-css', plugins_url('css/autocomplete.css', dirname(__FILE__)));
+        wp_enqueue_style( 'ns-autocomplete-css', plugins_url('css/autocomplete.css', dirname(__FILE__)));
         # this puts the ajax URL into nslodge_ajax.ajaxurl for the page javascript
         wp_localize_script( 'ns-report-troop', 'nslodge_ajax', array( 'ajaxurl' => admin_url( 'admin-ajax.php' ) ) );
+    }
+    if ($_SERVER['REQUEST_URI'] == '/ue/adultnomination') {
+        wp_enqueue_script('jquery-ui-autocomplete', '', array('jquery-ui-widget', 'jquery-ui-position'), '1.8.6');
+        wp_enqueue_script( 'ns-adult-nomination', plugins_url('js/adult-nomination.js', dirname(__FILE__)), array( 'jquery', 'jquery-form', 'json2' ), false, true );
+        wp_enqueue_style( 'ns-autocomplete-css', plugins_url('css/autocomplete.css', dirname(__FILE__)));
+        # this puts the ajax URL into nslodge_ajax.ajaxurl for the page javascript
+        wp_localize_script( 'ns-adult-nomination', 'nslodge_ajax', array( 'ajaxurl' => admin_url( 'admin-ajax.php' ) ) );
     }
 }
 # handlers
