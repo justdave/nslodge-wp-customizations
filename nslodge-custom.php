@@ -36,6 +36,11 @@ require_once("includes/approve-adults.php");
 require_once("includes/election-dashboard.php");
 require_once("includes/ajax-calls.php");
 
+function ns_global_overrides() {
+    wp_enqueue_style('nslodge-global-css', plugins_url('css/wp-overrides.css', __FILE__));
+}
+add_action('wp_enqueue_scripts', 'ns_global_overrides');
+
 function ns_devsite_admin_theme_style() {
     wp_enqueue_style('nslodge-admin-theme', plugins_url('css/wp-admin.css', __FILE__));
 }
