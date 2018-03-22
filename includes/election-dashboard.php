@@ -30,6 +30,20 @@ function my_enqueue($hook) {
     wp_enqueue_script( 'Chart-js', 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.4.0/Chart.bundle.min.js', __FILE__ );
 }
 
+add_action( 'init', 'ns_ue_permalinks' );
+function ns_ue_permalinks() {
+    add_rewrite_rule(
+        'ue/dashboard/chapter([0-9]+)/?',
+        'index.php?page_id=1999&chapter=$matches[1]',
+        'top'
+    );
+}
+add_filter( 'query_vars', 'ns_ue_query_vars' );
+function ns_ue_query_vars( $query_vars ) {
+    $query_vars[] = 'chapter';
+    return $query_vars;
+}
+
 function ns_election_widget() {
     global $wpdb;
     // $results = $wpdb->get_results("select b.chapter_num as chapter, greatest(0, count(distinct a.UnitNumber)) as number_submitted, count(distinct c.unit_num) as num_troops from wp_oa_chapters b left join wp_oa_ue_troops a on binary concat(0, b.chapter_num, ' - ', b.ChapterName) = binary a.ChapterName left join wp_oa_troops c on b.chapter_num = c.chapter_num group by c.chapter_num order by c.chapter_num");
@@ -203,7 +217,7 @@ function nslodge_ue_dashboard( $attrs ) {
     if (isset($_POST['ue_dashboard_action'])) {
         $action = $_POST['ue_dashboard_action'];
     }
-    if (isset($_GET['chapter'])) {
+    if (get_query_var('chapter')) {
         return nslodge_ue_dashboard_chapter();
     }
 
@@ -225,7 +239,7 @@ function nslodge_ue_dashboard_chapter() {
         $election_admin = 1;
     }
     ob_start();
-    $chapter = $_GET['chapter'];
+    $chapter = get_query_var('chapter');
     $chaptername = $wpdb->get_var($wpdb->prepare("SELECT ChapterName FROM wp_oa_chapters WHERE chapter_num = %d", Array($chapter)));
     echo "<h2>Election information for Chapter " . htmlspecialchars($chapter) . " - " . htmlspecialchars($chaptername) . "</h2>\n";
     if (!$election_committee) {
@@ -362,13 +376,13 @@ function nslodge_ue_dashboard_list_chapters() {
     <div style="clear: both;"></div>
     <?php if ($election_committee) { ?>
     <p>Chapter details:
-    <a href="<?php echo htmlspecialchars($homeurl) ?>/ue/dashboard?chapter=1">Chapter 1</a>
-    <a href="<?php echo htmlspecialchars($homeurl) ?>/ue/dashboard?chapter=2">Chapter 2</a>
-    <a href="<?php echo htmlspecialchars($homeurl) ?>/ue/dashboard?chapter=3">Chapter 3</a>
-    <a href="<?php echo htmlspecialchars($homeurl) ?>/ue/dashboard?chapter=4">Chapter 4</a>
-    <a href="<?php echo htmlspecialchars($homeurl) ?>/ue/dashboard?chapter=5">Chapter 5</a>
-    <a href="<?php echo htmlspecialchars($homeurl) ?>/ue/dashboard?chapter=6">Chapter 6</a>
-    <a href="<?php echo htmlspecialchars($homeurl) ?>/ue/dashboard?chapter=7">Chapter 7</a>
+    <a href="<?php echo htmlspecialchars($homeurl) ?>/ue/dashboard/chapter1">Chapter 1</a>
+    <a href="<?php echo htmlspecialchars($homeurl) ?>/ue/dashboard/chapter2">Chapter 2</a>
+    <a href="<?php echo htmlspecialchars($homeurl) ?>/ue/dashboard/chapter3">Chapter 3</a>
+    <a href="<?php echo htmlspecialchars($homeurl) ?>/ue/dashboard/chapter4">Chapter 4</a>
+    <a href="<?php echo htmlspecialchars($homeurl) ?>/ue/dashboard/chapter5">Chapter 5</a>
+    <a href="<?php echo htmlspecialchars($homeurl) ?>/ue/dashboard/chapter6">Chapter 6</a>
+    <a href="<?php echo htmlspecialchars($homeurl) ?>/ue/dashboard/chapter7">Chapter 7</a>
     </p>
     <div id="ue_election_requests" style="margin-top: 1em;">
     <h5>Outstanding Unscheduled Election Requests</h5>
