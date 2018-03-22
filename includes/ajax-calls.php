@@ -28,6 +28,13 @@ function ns_ue_ajax_enqueue_scripts() {
         # this puts the ajax URL into nslodge_ajax.ajaxurl for the page javascript
         wp_localize_script( 'ns-adult-nomination', 'nslodge_ajax', array( 'ajaxurl' => admin_url( 'admin-ajax.php' ) ) );
     }
+    if ($_SERVER['REQUEST_URI'] == '/ue/request') {
+        wp_enqueue_script('jquery-ui-autocomplete', '', array('jquery-ui-widget', 'jquery-ui-position'), '1.8.6');
+        wp_enqueue_script( 'ns-schedule-request', plugins_url('js/schedule-request.js', dirname(__FILE__)), array( 'jquery', 'jquery-form', 'json2' ), false, true );
+        wp_enqueue_style( 'ns-autocomplete-css', plugins_url('css/autocomplete.css', dirname(__FILE__)));
+        # this puts the ajax URL into nslodge_ajax.ajaxurl for the page javascript
+        wp_localize_script( 'ns-schedule-request', 'nslodge_ajax', array( 'ajaxurl' => admin_url( 'admin-ajax.php' ) ) );
+    }
 }
 # handlers
 add_action( 'wp_ajax_ns_get_troops_autocomplete', 'ns_get_troops_autocomplete' );
