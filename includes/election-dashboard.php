@@ -43,7 +43,7 @@ SELECT
     COUNT(rpts.UnitNumber) AS num_reports,
     COUNT(sch.tnum) AS num_reqs
 FROM
-    wp_nslodge_org.wp_oa_troops AS trp
+    wp_oa_troops AS trp
     LEFT JOIN wp_oa_chapters AS chp ON BINARY trp.chapter_num = BINARY chp.chapter_num
     LEFT JOIN wp_oa_ue_troops AS rpts ON BINARY CONCAT('0', chp.chapter_num, ' - ', chp.ChapterName) = BINARY rpts.ChapterName AND BINARY trp.unit_num = BINARY rpts.UnitNumber
     LEFT JOIN wp_oa_ue_schedules AS sch ON BINARY trp.chapter_num = BINARY sch.ChapterNumber AND BINARY trp.unit_num = BINARY sch.tnum
@@ -77,13 +77,7 @@ ORDER BY trp.chapter_num, trp.unit_num
             $data[$row->chapter][$row->troop] = [];
         }
         $data[$row->chapter][$row->troop]['num_reports'] = $row->num_reports;
-        if ($row->num_reports > 1) {
-            $completed[$row->chapter] = $completed[$row->chapter] + 1;
-        }
         $data[$row->chapter][$row->troop]['num_reqs'] = $row->num_reqs;
-        if ($row->num_reqs > 1) {
-            $requested[$row->chapter] = $requested[$row->chapter] + 1;
-        }
         $data[$row->chapter][$row->troop]['scheduled'] = 0;
         if ((array_key_exists($row->chapter, $elecscheds)) &&
              (array_key_exists($row->troop, $elecscheds[$row->chapter]))) {
@@ -238,24 +232,75 @@ function nslodge_ue_dashboard_chapter() {
         echo "<p>Please log in to an account with permission to view this data.</p>\n";
     } else {
         $results = $wpdb->get_results($wpdb->prepare("
-        SELECT id, COUNT(rpts.UnitNumber) AS reports, district_name, unit_num, sm_full_name, sm_phone_number, sm_email, sm_street, sm_city, sm_state, sm_zip_code
-        FROM wp_oa_troops AS tr
-        LEFT JOIN wp_oa_chapters AS ch ON tr.chapter_num = ch.chapter_num
-        LEFT JOIN wp_oa_districts AS di ON tr.district_num = di.district_num
-        LEFT JOIN wp_oa_ue_troops AS rpts ON BINARY CONCAT('0', ch.chapter_num, ' - ', ch.ChapterName) = BINARY rpts.ChapterName AND BINARY tr.unit_num = BINARY rpts.UnitNumber
-        where tr.chapter_num = %d
-        group by tr.district_num, tr.unit_num
+SELECT
+    id,
+    COUNT(rpts.UnitNumber) AS reports,
+    MAX(rpts.ElectionDate) AS election_date,
+    COUNT(sched.tnum) AS requests,
+    district_name,
+    unit_num,
+    sm_full_name,
+    sm_phone_number,
+    sm_email,
+    sm_street,
+    sm_city,
+    sm_state,
+    sm_zip_code
+FROM
+    wp_oa_troops AS tr
+        LEFT JOIN
+    wp_oa_chapters AS ch ON tr.chapter_num = ch.chapter_num
+        LEFT JOIN
+    wp_oa_districts AS di ON tr.district_num = di.district_num
+        LEFT JOIN
+    wp_oa_ue_troops AS rpts ON BINARY CONCAT('0',
+            ch.chapter_num,
+            ' - ',
+            ch.ChapterName) = BINARY rpts.ChapterName
+        AND BINARY tr.unit_num = BINARY rpts.UnitNumber
+        LEFT JOIN
+    wp_oa_ue_schedules AS sched ON tr.chapter_num = sched.ChapterNumber AND tr.unit_num = sched.tnum
+WHERE
+    tr.chapter_num = %d
+GROUP BY tr.district_num , tr.unit_num
+ORDER BY tr.unit_num , tr.district_num
     ",
         Array($chapter)));
+        $elecscheds = nslodge_ue_getelections($chapter);
         echo '<table class="wp_table">';
-        echo "\n<tr><th>Reports Filed</th><th>District</th><th>Troop</th><th>Scoutmaster</th></tr>\n";
+        echo "\n<tr><th>Status</th><th>Reports Filed</th><th>District</th><th>Troop</th><th>Election Date</th><th>Scoutmaster</th></tr>\n";
         foreach ($results as $row) {
-            $rowcolor = 'transparent';
+            $status = 'Not Scheduled';
+            $rowcolor = '#f22';
+            $election_date = '';
+            if ($row->requests > 0) {
+                $status = 'Requested';
+                $rowcolor = '#f82';
+            }
+            if ((array_key_exists($chapter, $elecscheds)) &&
+                 (array_key_exists($row->unit_num, $elecscheds[$chapter]))) {
+                $status = 'Scheduled';
+                $rowcolor = '#0c7';
+                $election_date = $elecscheds[$chapter][$row->unit_num];
+            }
+            if (($status == 'Scheduled') && (strtotime($election_date) < time())) {
+                $status = 'Missing Paperwork';
+                $rowcolor = '#f0f';
+            }
             if ($row->reports > 0) {
+                $status = 'Completed';
                 $rowcolor = 'cyan';
+                $election_date = $row->election_date;
             }
             echo '<tr style="background-color: ' . $rowcolor . '">';
-            foreach (Array('reports','district_name','unit_num','sm_full_name') as $item) {
+            echo "<td>" . htmlspecialchars($status) . "</td>";
+            #elseif ($rowcolor == 'orange') { echo '<td>Requested</td>'; }
+            #elseif ($rowcolor == 'purple') { echo '<td>Past Schedule</td>'; }
+            if ($election_date) {
+                $election_date = date("Y-m-d",strtotime($election_date));
+            }
+            $row->election_date = $election_date;
+            foreach (Array('reports','district_name','unit_num','election_date','sm_full_name') as $item) {
                 echo "<td>" . htmlspecialchars($row->$item) . "</td>";
             }
             echo "</tr>\n";
