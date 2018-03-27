@@ -245,6 +245,7 @@ function nslodge_ue_dashboard_chapter() {
     if (!$election_committee) {
         echo "<p>Please log in to an account with permission to view this data.</p>\n";
     } else {
+        echo '<p><a href="/ue/dashboard">&larr; Back to Lodge view</a></p>';
         $results = $wpdb->get_results($wpdb->prepare("
 SELECT
     id,
