@@ -14,6 +14,36 @@ $j(document).ready(function(){
   $j('#req').attr('readonly', true);
   $j('#troop_picked').hide();
   $j('#change_troop').click(change_troop);
+  $j('#election_type').change(function(){
+      if ($j('#election_type').val() == 'election') {
+          $j('.ns_type_election').show();
+          $j('.ns_type_all').show();
+      }
+      else if (($j('#election_type').val() == 'noone_eligible') ||
+               ($j('#election_type').val() == 'non_participant')) {
+          $j('.ns_type_election').hide();
+          $j('.ns_type_all').show();
+          $j('input[name=ElectionDate]').val($j.datepicker.formatDate('yy-mm-dd', new Date()));
+//          $j('select[name=camp]').val('Other (explain in Additional Information below)');
+          $j('textarea[name=UETeamNames]').val('None');
+          $j('input[name=RegActiveYouth]').val(0);
+          $j('input[name=YouthPresent]').val(0);
+          $j('input[name=NumberEligible]').val(0);
+          $j('input[name=NumberBallotsReturned]').val(0);
+          $j('input[name=NumberRequired]').val(0);
+          $j('input[name=NumberElected]').val(0);
+          if ($j('#election_type').val() == 'noone_eligible') {
+              $j('textarea[name=AdditionalInfo]').val('No one was eligible this year.');
+          }
+          else if ($j('#election_type').val() == 'non_participant') {
+              $j('textarea[name=AdditionalInfo]').val('This troop does not participate in the OA.');
+          }
+      }
+      else if ($j('#election_type').val() == '') {
+          $j('.ns_type_election').hide();
+          $j('.ns_type_all').hide();
+      }
+  });
   $j('#troopsearch').autocomplete({
     source: nslodge_ajax.ajaxurl + '?action=ns_get_troops_autocomplete',
     select: function( event, ui ) {
