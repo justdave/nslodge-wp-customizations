@@ -102,7 +102,7 @@ function nslodge_ue_schedreqs( $attrs ) {
 
     global $wpdb;
     if ($chapter == 'all') {
-    $results = $wpdb->get_results($wpdb->prepare("
+    $results = $wpdb->get_results("
 SELECT Chapter, Troop, ReqDate, Priority, COUNT(rpts.UnitNumber) as Reports FROM (
 SELECT ChapterNumber AS Chapter, tnum AS Troop, `e-date-1` AS ReqDate, '1' AS Priority FROM wp_oa_ue_schedules
 UNION
@@ -113,7 +113,7 @@ SELECT ChapterNumber AS Chapter, tnum AS Troop, `e-date-3` AS ReqDate, '3' AS Pr
 LEFT JOIN wp_oa_chapters AS chp ON BINARY sched.Chapter = BINARY chp.chapter_num
 LEFT JOIN wp_oa_ue_troops AS rpts ON BINARY CONCAT('0', chp.chapter_num, ' - ', chp.ChapterName) = BINARY rpts.ChapterName AND BINARY sched.Troop = BINARY rpts.UnitNumber
 GROUP BY Chapter, Troop, Priority
-ORDER BY ReqDate, Priority"));
+ORDER BY ReqDate, Priority");
     } else {
     $results = $wpdb->get_results($wpdb->prepare("
 SELECT Chapter, Troop, ReqDate, Priority, COUNT(rpts.UnitNumber) as Reports FROM (

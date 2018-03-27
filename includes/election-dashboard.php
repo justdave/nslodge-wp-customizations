@@ -387,7 +387,7 @@ function nslodge_ue_dashboard_list_chapters() {
     </p>
     <div id="ue_election_requests" style="margin-top: 1em;">
     <h5>Outstanding Unscheduled Election Requests</h5>
-    <?php echo nslodge_ue_schedreqs(); ?>
+    <?php echo nslodge_ue_schedreqs(Array("chapter" => "all")); ?>
     <div style="clear: both;"></div>
     <?php
     }
