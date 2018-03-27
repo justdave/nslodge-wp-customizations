@@ -95,6 +95,17 @@ function nslodge_ue_list_nominations() {
         $troops[$unit_token]['youth_elected'] = $row->NumElected;
         $troops[$unit_token]['nominations'] = [];
     }
+    $results = $wpdb->get_results("SELECT `ChapterName`, `UnitNumber`, COUNT(*) AS ReportsSubmitted FROM wp_oa_ue_troops GROUP BY `ChapterName` , `UnitNumber` ORDER BY `ChapterName` , `UnitNumber`");
+    foreach ($results as $row) {
+        $unit_token = get_unit_token($row->ChapterName, $row->UnitNumber);
+        if (!isset($troops[$unit_token])) {
+            $troops[$unit_token]['chapter'] = $row->ChapterName;
+            $troops[$unit_token]['troop'] = $row->UnitNumber;
+            $troops[$unit_token]['youth_elected'] = 0;
+            $troops[$unit_token]['nominations'] = [];
+            $troops[$unit_token]['report_pending'] = 1;
+        }
+    }
 
     $results = $wpdb->get_results("SELECT `" . join ("`, `",$nomination_columns) . "` FROM wp_oa_ue_adults");
     foreach ($results as $row) {
@@ -168,6 +179,9 @@ function ue_adult_submit(chapter, troop, bsaid) {
     foreach ($troops as $troop) {
         $style = "";
         $elected = $troop['youth_elected'];
+        if ((0 == $elected) && (isset($troop['report_pending']))) {
+            $elected = "(report pending)";
+        }
         $allowed = ceil($elected/3);
         $nominations = count($troop['nominations']);
         $nomination_style = "";
