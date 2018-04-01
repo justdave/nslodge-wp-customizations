@@ -374,9 +374,10 @@ function nslodge_ue_dashboard_list_chapters() {
     ?>
     Elections should be scheduled by March 31st.<br>Makeup elections should be completed by April 30th.<br>
     </div>
-    <div style="clear: both;"></div>
+    <div style="clear: both; margin-bottom: 1em;">
+    </div>
     <?php if ($election_committee) { ?>
-    <p>Chapter details:
+    <p style="text-align: center;">Chapter details:
     <a href="<?php echo htmlspecialchars($homeurl) ?>/ue/dashboard/chapter1">Chapter 1</a>
     <a href="<?php echo htmlspecialchars($homeurl) ?>/ue/dashboard/chapter2">Chapter 2</a>
     <a href="<?php echo htmlspecialchars($homeurl) ?>/ue/dashboard/chapter3">Chapter 3</a>
@@ -385,6 +386,10 @@ function nslodge_ue_dashboard_list_chapters() {
     <a href="<?php echo htmlspecialchars($homeurl) ?>/ue/dashboard/chapter6">Chapter 6</a>
     <a href="<?php echo htmlspecialchars($homeurl) ?>/ue/dashboard/chapter7">Chapter 7</a>
     </p>
+    <?php
+    } ?>
+    <p style="text-align: center;">The code behind this page lives on <a href="https://github.com/justdave/nslodge-wp-customizations/">GitHub</a> - <a href="https://github.com/justdave/nslodge-wp-customizations/commits/master">Change Log</a> - <a href="https://github.com/justdave/nslodge-wp-customizations/issues">Bug Reports/Feature Requests</a></p>
+    <?php if ($election_committee) { ?>
     <div id="ue_election_requests" style="margin-top: 1em;">
     <h5>Outstanding Unscheduled Election Requests</h5>
     <?php echo nslodge_ue_schedreqs(Array("chapter" => "all")); ?>
