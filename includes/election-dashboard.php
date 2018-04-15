@@ -378,13 +378,13 @@ function nslodge_ue_dashboard_list_chapters() {
     </div>
     <?php if ($election_committee) { ?>
     <p style="text-align: center;">Chapter details:
-    <a href="<?php echo htmlspecialchars($homeurl) ?>/ue/dashboard/chapter1">Chapter 1</a>
-    <a href="<?php echo htmlspecialchars($homeurl) ?>/ue/dashboard/chapter2">Chapter 2</a>
-    <a href="<?php echo htmlspecialchars($homeurl) ?>/ue/dashboard/chapter3">Chapter 3</a>
-    <a href="<?php echo htmlspecialchars($homeurl) ?>/ue/dashboard/chapter4">Chapter 4</a>
-    <a href="<?php echo htmlspecialchars($homeurl) ?>/ue/dashboard/chapter5">Chapter 5</a>
-    <a href="<?php echo htmlspecialchars($homeurl) ?>/ue/dashboard/chapter6">Chapter 6</a>
-    <a href="<?php echo htmlspecialchars($homeurl) ?>/ue/dashboard/chapter7">Chapter 7</a>
+    <a href="<?php echo htmlspecialchars($homeurl) ?>/ue/dashboard?chapter=1">Chapter 1</a>
+    <a href="<?php echo htmlspecialchars($homeurl) ?>/ue/dashboard?chapter=2">Chapter 2</a>
+    <a href="<?php echo htmlspecialchars($homeurl) ?>/ue/dashboard?chapter=3">Chapter 3</a>
+    <a href="<?php echo htmlspecialchars($homeurl) ?>/ue/dashboard?chapter=4">Chapter 4</a>
+    <a href="<?php echo htmlspecialchars($homeurl) ?>/ue/dashboard?chapter=5">Chapter 5</a>
+    <a href="<?php echo htmlspecialchars($homeurl) ?>/ue/dashboard?chapter=6">Chapter 6</a>
+    <a href="<?php echo htmlspecialchars($homeurl) ?>/ue/dashboard?chapter=7">Chapter 7</a>
     </p>
     <?php
     } ?>
