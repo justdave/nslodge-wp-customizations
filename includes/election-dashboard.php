@@ -254,13 +254,20 @@ SELECT
     COUNT(sched.tnum) AS requests,
     district_name,
     unit_num,
+    unit_city,
+    charter_org,
     sm_full_name,
     sm_phone_number,
     sm_email,
-    sm_street,
-    sm_city,
-    sm_state,
-    sm_zip_code
+    cc_full_name,
+    cc_phone_number,
+    cc_email,
+    adv_full_name,
+    adv_phone_number,
+    adv_email,
+    rep_full_name,
+    rep_phone_number,
+    rep_email
 FROM
     wp_oa_troops AS tr
         LEFT JOIN
@@ -283,7 +290,7 @@ ORDER BY tr.unit_num , tr.district_num
         Array($chapter)));
         $elecscheds = nslodge_ue_getelections($chapter);
         echo '<table class="wp_table">';
-        echo "\n<tr><th>Status</th><th>Reports Filed</th><th>District</th><th>Troop</th><th>Election Date</th><th>Scoutmaster</th></tr>\n";
+        echo "\n<tr><th>Status</th><th>Reports Filed</th><th>District</th><th>Troop</th><th>Election Date</th><th>Scoutmaster</th><th>Committee Chair</th><th>OA Rep</th></tr>\n";
         foreach ($results as $row) {
             $status = 'Not Scheduled';
             $rowcolor = '#f22';
@@ -315,7 +322,7 @@ ORDER BY tr.unit_num , tr.district_num
                 $election_date = date("Y-m-d",strtotime($election_date));
             }
             $row->election_date = $election_date;
-            foreach (Array('reports','district_name','unit_num','election_date','sm_full_name') as $item) {
+            foreach (Array('reports','district_name','unit_num','election_date','sm_full_name','cc_full_name','rep_full_name') as $item) {
                 echo "<td>" . htmlspecialchars($row->$item) . "</td>";
             }
             echo "</tr>\n";

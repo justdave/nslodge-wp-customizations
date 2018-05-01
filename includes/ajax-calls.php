@@ -45,13 +45,13 @@ function ns_get_troops_autocomplete() {
     $term = $_GET['term'];
     $term = intval($term);
     $results = $wpdb->get_results($wpdb->prepare("
-        SELECT unit_num, ch.ChapterName AS chapter_name, SelectorName, district_name
+        SELECT unit_num, ch.ChapterName AS chapter_name, SelectorName, district_name, unit_city, charter_org
         FROM wp_oa_troops AS tr
         LEFT JOIN wp_oa_chapters AS ch ON tr.chapter_num = ch.chapter_num
         LEFT JOIN wp_oa_districts AS di ON tr.district_num = di.district_num
         WHERE tr.unit_num LIKE %s
         ORDER BY tr.unit_num
-    ", Array($term . "%")));
+    ", Array("%" . $term . "%")));
     wp_send_json($results);
 
     die();// wordpress may print out a spurious zero without this - can be particularly bad if using json

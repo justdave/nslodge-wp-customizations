@@ -17,7 +17,11 @@ $j(document).ready(function(){
     },
   }).autocomplete("instance")._renderItem = function( ul, item ) {
     //alert(JSON.stringify(item))
-    item.label = item.district_name + " - Troop " + item.unit_num + " (" + item.SelectorName + ")";
+    city = item.unit_city;
+    if (city.length > 2) {
+        city = ' - ' + city;
+    }
+    item.label = item.district_name + " - Troop " + item.unit_num + city + " (" + item.SelectorName + ")";
     li = $j('<li>')
       .attr("data-value", JSON.stringify(item))
       .append(item.label)
