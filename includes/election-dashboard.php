@@ -46,7 +46,6 @@ function ns_ue_query_vars( $query_vars ) {
 
 function ns_election_widget() {
     global $wpdb;
-    // $results = $wpdb->get_results("select b.chapter_num as chapter, greatest(0, count(distinct a.UnitNumber)) as number_submitted, count(distinct c.unit_num) as num_troops from wp_oa_chapters b left join wp_oa_ue_troops a on binary concat(0, b.chapter_num, ' - ', b.ChapterName) = binary a.ChapterName left join wp_oa_troops c on b.chapter_num = c.chapter_num group by c.chapter_num order by c.chapter_num");
     if (is_admin()) {
         ?><a href="/ue/dashboard">Go to Unit Elections Dashboard</a><br><?php
     }
@@ -289,8 +288,8 @@ ORDER BY tr.unit_num , tr.district_num
     ",
         Array($chapter)));
         $elecscheds = nslodge_ue_getelections($chapter);
-        echo '<table class="wp_table">';
-        echo "\n<tr><th>Status</th><th>Reports Filed</th><th>District</th><th>Troop</th><th>Election Date</th><th>Scoutmaster</th><th>Committee Chair</th><th>OA Rep</th></tr>\n";
+        echo '<table class="wp_table oa_chapter_info">';
+        echo "\n<tr><th>Status</th><th>Reports Filed</th><th>District</th><th>Troop</th><th>City</th><th>Election Date</th><th>Scoutmaster</th><th>Committee Chair</th><th>OA Rep</th></tr>\n";
         foreach ($results as $row) {
             $status = 'Not Scheduled';
             $rowcolor = '#f22';
@@ -322,9 +321,12 @@ ORDER BY tr.unit_num , tr.district_num
                 $election_date = date("Y-m-d",strtotime($election_date));
             }
             $row->election_date = $election_date;
-            foreach (Array('reports','district_name','unit_num','election_date','sm_full_name','cc_full_name','rep_full_name') as $item) {
-                echo "<td>" . htmlspecialchars($row->$item) . "</td>";
+            foreach (Array('reports','district_name','unit_num','unit_city','election_date') as $item) {
+                echo "<td>" . htmlspecialchars($row->$item) . "</td>\n";
             }
+            echo "<td>" . htmlspecialchars($row->sm_full_name) . "<br>" . htmlspecialchars($row->sm_email) . "<br>" . htmlspecialchars($row->sm_phone_number) . "</td>\n";
+            echo "<td>" . htmlspecialchars($row->cc_full_name) . "<br>" . htmlspecialchars($row->cc_email) . "<br>" . htmlspecialchars($row->cc_phone_number) . "</td>\n";
+            echo "<td>" . htmlspecialchars($row->rep_full_name) . "<br>" . htmlspecialchars($row->rep_email) . "<br>" . htmlspecialchars($row->rep_phone_number) . "</td>\n";
             echo "</tr>\n";
         }
         echo "</table>\n";

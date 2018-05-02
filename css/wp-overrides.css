@@ -1,3 +1,10 @@
 input, textarea {
   border: 1px solid rgba(0, 0, 0, 0.3)!important;
 }
+.oa_chapter_info td {
+    white-space: nowrap;
+}
+.oa_chapter_info th {
+    background: #fff;
+    hyphens: none;
+}
