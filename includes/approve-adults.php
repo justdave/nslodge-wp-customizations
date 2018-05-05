@@ -116,6 +116,7 @@ function nslodge_ue_list_nominations() {
             $troops[$unit_token]['chapter'] = $row->ChapterName;
             $troops[$unit_token]['troop'] = $row->UnitNumber;
             $troops[$unit_token]['youth_elected'] = 0;
+            $troops[$unit_token]['no_report_filed'] = 1;
         }
         if (isset($troops[$unit_token]['nominations'][$row->BSAMemberID])) {
             $troops[$unit_token]['warnings'][] = "multiple nominations for same BSAID";
@@ -183,6 +184,9 @@ function ue_adult_submit(chapter, troop, bsaid) {
         $elected = $troop['youth_elected'];
         if ((0 == $elected) && (isset($troop['report_pending']))) {
             $elected = "(report pending)";
+        }
+        if ((0 == $elected) && (isset($troop['no_report_filed']))) {
+            $elected = "(no report filed)";
         }
         $allowed = ceil($elected/3);
         $nominations = count($troop['nominations']);
