@@ -95,7 +95,7 @@ function nslodge_ue_list_nominations() {
         $troops[$unit_token]['youth_elected'] = $row->NumElected;
         $troops[$unit_token]['nominations'] = [];
     }
-    $results = $wpdb->get_results("SELECT `ChapterName`, `UnitNumber`, COUNT(*) AS ReportsSubmitted FROM wp_oa_ue_troops GROUP BY `ChapterName` , `UnitNumber` ORDER BY `ChapterName` , `UnitNumber`");
+    $results = $wpdb->get_results("SELECT `ChapterName`, `UnitNumber`, COUNT(*) AS ReportsSubmitted, MAX(NumberElected) AS NumElected FROM wp_oa_ue_troops GROUP BY `ChapterName` , `UnitNumber` ORDER BY `ChapterName` , `UnitNumber`");
     foreach ($results as $row) {
         $unit_token = get_unit_token($row->ChapterName, $row->UnitNumber);
         if (!isset($troops[$unit_token])) {
@@ -103,11 +103,13 @@ function nslodge_ue_list_nominations() {
             $troops[$unit_token]['troop'] = $row->UnitNumber;
             $troops[$unit_token]['youth_elected'] = 0;
             $troops[$unit_token]['nominations'] = [];
-            $troops[$unit_token]['report_pending'] = 1;
+            if ($row->NumElected > 0) {
+                $troops[$unit_token]['report_pending'] = 1;
+            }
         }
     }
 
-    $results = $wpdb->get_results("SELECT `" . join ("`, `",$nomination_columns) . "` FROM wp_oa_ue_adults");
+    $results = $wpdb->get_results("SELECT `" . join ("`, `",$nomination_columns) . "` FROM wp_oa_ue_adults WHERE `recommendation` LIKE 'Unit%'");
     foreach ($results as $row) {
         $unit_token = get_unit_token($row->ChapterName, $row->UnitNumber);
         if (!isset($troops[$unit_token])) {
@@ -226,6 +228,32 @@ function ue_adult_submit(chapter, troop, bsaid) {
     }
     $output .= "</table>\n";
     #$output .= "<pre>" . esc_html(var_dump_ret($troops)) . "</pre>";
+    $distresults = $wpdb->get_results("SELECT `" . join ("`, `",$nomination_columns) . "` FROM wp_oa_ue_adults WHERE `recommendation` LIKE 'District%'");
+    $output .= '<table class="adult_outside"><tr><th>District/Council Recommendations</th></tr>' . "\n";
+    $distreqs = [];
+    foreach ($distresults as $row) {
+        $distreqs[$row->BSAMemberID] = $row;
+    }
+    $output .= '<tr class="nominations"><td><table class="adult_inside">';
+    foreach ($distreqs as $nomination) {
+        $name = sprintf("%s %s %s %s", $nomination->FirstName, $nomination->MiddleName, $nomination->LastName, $nomination->Suffix);
+        $name = ltrim(rtrim(str_replace("  ", " ", $name)));
+        $jsclick = '<a href="#" onClick="ue_adult_submit(' . "'%s','%s', '%s'" . '); return false;">View</a>';
+        $link = sprintf($jsclick, esc_html($troop['chapter']), esc_html($troop['troop']), esc_html($nomination->BSAMemberID));
+        $approved = $wpdb->get_var($wpdb->prepare("SELECT Approved FROM wp_oa_ue_adult_nominations WHERE BSAMemberId = %s", $nomination->BSAMemberID));
+        $status = '<span style="color: #b80;">Pending</span>';
+        if (isset($approved)) {
+            if ($approved) {
+                $status = '<span style="color: green;">Approved</span>';
+            } else {
+                $status = '<span style="color: red;">Rejected</span>';
+            }
+        }
+        $output .= sprintf("<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>",
+            esc_html(date("Y-m-d H:m:s", $nomination->Submitted)), $name, esc_html($nomination->CurrentPosition), $status, $link);
+    }
+    $output .= '</table></td></tr>';
+    $output .= '</table>';
     return $output;
 }
 
