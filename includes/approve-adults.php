@@ -457,7 +457,7 @@ function nslodge_ue_do_adult_cvs_export() {
     header('Content-Transfer-Encoding: binary', true);
     header('Expires: 0');
     header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
-    echo '"Election Date","Chapter Name","Unit Type","Unit Number","First Name","Middle Name","Last Name","Suffix","BSA Person ID","Home Email Address","Home Phone","Address Line 1","Address Line 2","City","State","Zip Code","Gender","Date Of Birth"' . "\n";
+    echo '"Election Date","Chapter","Unit Type","Unit Number","First Name","Middle Name","Last Name","Suffix","BSA ID","Home Email Address","Home Phone","Home Street 1","Home Street 2","Home City","Home State","Home Zip Code","Gender","Date Of Birth"' . "\n";
     $candidate_columnlist = [
         'ElectionDate',
         'ChapterName',
