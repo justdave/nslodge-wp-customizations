@@ -243,7 +243,7 @@ function ue_adult_submit(chapter, troop, bsaid) {
         $name = sprintf("%s %s %s %s", $nomination->FirstName, $nomination->MiddleName, $nomination->LastName, $nomination->Suffix);
         $name = ltrim(rtrim(str_replace("  ", " ", $name)));
         $jsclick = '<a href="#" onClick="ue_adult_submit(' . "'%s','%s', '%s'" . '); return false;">View</a>';
-        $link = sprintf($jsclick, esc_html($troop['chapter']), esc_html($troop['troop']), esc_html($nomination->BSAMemberID));
+        $link = sprintf($jsclick, esc_html($nomination->ChapterName), esc_html($nomination->UnitNumber), esc_html($nomination->BSAMemberID));
         $approved = $wpdb->get_var($wpdb->prepare("SELECT Approved FROM wp_oa_ue_adult_nominations WHERE BSAMemberId = %s", $nomination->BSAMemberID));
         $status = '<span style="color: #b80;">Pending</span>';
         if (isset($approved)) {
