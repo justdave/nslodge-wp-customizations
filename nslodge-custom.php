@@ -37,6 +37,7 @@ require_once("includes/election-dashboard.php");
 require_once("includes/ajax-calls.php");
 
 function ns_global_overrides() {
+    add_thickbox();
     wp_enqueue_style('nslodge-global-css', plugins_url('css/wp-overrides.css', __FILE__));
 }
 add_action('wp_enqueue_scripts', 'ns_global_overrides');
