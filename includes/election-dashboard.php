@@ -114,7 +114,7 @@ var ctx = document.getElementById("nsElectionChart");
 var ue_chartconfig = {
     type: 'horizontalBar',
     data: {
-        labels: ["Chapter 1", "Chapter 2", "Chapter 3", "Chapter 4", "Chapter 5", "Chapter 6", "Chapter 7", "Entire Lodge"],
+        labels: ["Chapter A", "Chapter B", "Chapter C", "Chapter D", "Chapter E", "Entire Lodge"],
         datasets: [
         {
             label: 'Complete',
@@ -378,7 +378,8 @@ function nslodge_ue_dashboard_list_chapters() {
     <?php } ?>
     </div>
     <div id="ue_master_chart" style="width: 500px; float: right;">
-    <h5 style="margin-top: 0px;">2017-2018 Unit Election Status</h5>
+    <h5 style="margin-top: 0px;">2018-2019 Unit Election Status</h5>
+    <p>This page is under construction to remodel for the new election year and new chapters. Please check back later!</p>
     <?php
     ns_election_widget();
     ?>
@@ -388,13 +389,11 @@ function nslodge_ue_dashboard_list_chapters() {
     </div>
     <?php if ($election_committee) { ?>
     <p style="text-align: center;">Chapter details:
-    <a href="<?php echo htmlspecialchars($homeurl) ?>/ue/dashboard?chapter=1">Chapter 1</a>
-    <a href="<?php echo htmlspecialchars($homeurl) ?>/ue/dashboard?chapter=2">Chapter 2</a>
-    <a href="<?php echo htmlspecialchars($homeurl) ?>/ue/dashboard?chapter=3">Chapter 3</a>
-    <a href="<?php echo htmlspecialchars($homeurl) ?>/ue/dashboard?chapter=4">Chapter 4</a>
-    <a href="<?php echo htmlspecialchars($homeurl) ?>/ue/dashboard?chapter=5">Chapter 5</a>
-    <a href="<?php echo htmlspecialchars($homeurl) ?>/ue/dashboard?chapter=6">Chapter 6</a>
-    <a href="<?php echo htmlspecialchars($homeurl) ?>/ue/dashboard?chapter=7">Chapter 7</a>
+    <a href="<?php echo htmlspecialchars($homeurl) ?>/ue/dashboard/chapter-a">Chapter A</a>
+    <a href="<?php echo htmlspecialchars($homeurl) ?>/ue/dashboard/chapter-b">Chapter B</a>
+    <a href="<?php echo htmlspecialchars($homeurl) ?>/ue/dashboard/chapter-c">Chapter C</a>
+    <a href="<?php echo htmlspecialchars($homeurl) ?>/ue/dashboard/chapter-d">Chapter D</a>
+    <a href="<?php echo htmlspecialchars($homeurl) ?>/ue/dashboard/chapter-e">Chapter E</a>
     </p>
     <?php
     } ?>
