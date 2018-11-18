@@ -7,8 +7,9 @@ $j(document).ready(function(){
     source: nslodge_ajax.ajaxurl + '?action=ns_get_troops_autocomplete',
     select: function( event, ui ) {
         $j("#chapter-selector").val(ui.item.SelectorName).change();
-        $j('#chapter').val(ui.item.SelectorName);
-        $j("input[name=tnum]").val(ui.item.unit_num);
+        $j('#ChapterName').val(ui.item.SelectorName);
+        $j("#UnitType").val(ui.item.unit_type);
+        $j("#UnitNum").val(ui.item.unit_num);
         $j('#troop_result').html(ui.item.label);
         $j('#troop_picker').hide();
         $j('#troop_picked').show();
@@ -21,7 +22,7 @@ $j(document).ready(function(){
     if (city.length > 2) {
         city = ' - ' + city;
     }
-    item.label = item.district_name + " - Troop " + item.unit_num + city + " (" + item.SelectorName + ")";
+    item.label = item.district_name + " - " + item.unit_type + " " + item.unit_num + city + " (" + item.SelectorName + ")";
     li = $j('<li>')
       .attr("data-value", JSON.stringify(item))
       .append(item.label)

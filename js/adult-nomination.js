@@ -7,8 +7,10 @@ $j(document).ready(function(){
     source: nslodge_ajax.ajaxurl + '?action=ns_get_troops_autocomplete',
     select: function( event, ui ) {
         $j("#ChapterName").val(ui.item.SelectorName).change();
-        $j("#UnitNumber").attr('value',ui.item.unit_num);
-        // ^ this doesn't work with .val() for some reason, maybe because type="number"
+        $j("#UnitType").val(ui.item.unit_type);
+        $j("#UnitNumber").val(ui.item.unit_num);
+        $j("#ULName").val(ui.item.ul_full_name);
+        $j("#CCName").val(ui.item.cc_full_name);
         $j('#troop_result').html(ui.item.label);
         $j('#troop_picker').hide();
         $j('#troop_picked').show();
@@ -21,13 +23,17 @@ $j(document).ready(function(){
     if (city.length > 2) {
         city = ' - ' + city;
     }
-    item.label = item.district_name + " - Troop " + item.unit_num + city + " (" + item.SelectorName + ")";
+    item.label = item.district_name + " - " + item.unit_type + " " + item.unit_num + city + " (" + item.SelectorName + ")";
     li = $j('<li>')
       .attr("data-value", JSON.stringify(item))
       .append(item.label)
       .appendTo(ul);
     return li;
   }
+  $j('#DateOfBirth').change(function(){
+    var age = getAge($j('#DateOfBirth').val());
+    $j('#scout_age').text("(Age: " + age + ")");
+  });
   $j('#recommendation').change(function(){
       if ($j('#recommendation').val() == 'Unit Recommendation') {
           $j('#unit_unpicked').hide();
@@ -82,10 +88,20 @@ $j(document).ready(function(){
       $j('#troop_picked').show();
   });
 
-
 });
 
 function change_troop(){
     $j('#recommendation').change();
     return false;
+}
+
+function getAge(dateString) {
+    var today = new Date();
+    var birthDate = new Date(dateString);
+    var age = today.getFullYear() - birthDate.getFullYear();
+    var m = today.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+    }
+    return age;
 }

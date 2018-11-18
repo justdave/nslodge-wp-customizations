@@ -33,7 +33,7 @@ function my_enqueue($hook) {
 add_action( 'init', 'ns_ue_permalinks' );
 function ns_ue_permalinks() {
     add_rewrite_rule(
-        'ue/dashboard/chapter([0-9]+)/?',
+        'ue/dashboard/chapter-(.+)/?',
         'index.php?page_id=1999&chapter=$matches[1]',
         'top'
     );
@@ -51,17 +51,18 @@ function ns_election_widget() {
     }
     $results = $wpdb->get_results("
 SELECT
-    trp.chapter_num AS chapter,
-    trp.unit_num AS troop,
+    unit.chapter_num AS chapter,
+    unit.unit_type AS unit_type
+    unit.unit_num AS unit_num,
     COUNT(rpts.UnitNumber) AS num_reports,
     COUNT(sch.tnum) AS num_reqs
 FROM
-    wp_oa_troops AS trp
-    LEFT JOIN wp_oa_chapters AS chp ON BINARY trp.chapter_num = BINARY chp.chapter_num
-    LEFT JOIN wp_oa_ue_troops AS rpts ON BINARY CONCAT('0', chp.chapter_num, ' - ', chp.ChapterName) = BINARY rpts.ChapterName AND BINARY trp.unit_num = BINARY rpts.UnitNumber
-    LEFT JOIN wp_oa_ue_schedules AS sch ON BINARY trp.chapter_num = BINARY sch.ChapterNumber AND BINARY trp.unit_num = BINARY sch.tnum
-GROUP BY trp.chapter_num, trp.unit_num
-ORDER BY trp.chapter_num, trp.unit_num
+    wp_oa_units AS unit
+    LEFT JOIN wp_oa_chapters AS chp ON BINARY unit.chapter_num = BINARY chp.chapter_num
+    LEFT JOIN wp_oa_ue_troops AS rpts ON BINARY CONCAT('0', chp.chapter_num, ' - ', chp.ChapterName) = BINARY rpts.ChapterName AND BINARY unit.unit_num = BINARY rpts.UnitNumber
+    LEFT JOIN wp_oa_ue_schedules AS sch ON BINARY unit.chapter_num = BINARY sch.ChapterNumber AND BINARY unit.unit_num = BINARY sch.tnum
+GROUP BY unit.chapter_num, unit.unit_num
+ORDER BY unit.chapter_num, unit.unit_num
 ");
 
     $completed = [];

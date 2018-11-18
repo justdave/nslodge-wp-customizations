@@ -16,10 +16,16 @@ function ns_ue_ajax_enqueue_scripts() {
     global $wp;
     if ($_SERVER['REQUEST_URI'] == '/ue/report') {
         wp_enqueue_script('jquery-ui-autocomplete', '', array('jquery-ui-widget', 'jquery-ui-position'), '1.8.6');
-        wp_enqueue_script( 'ns-report-troop', plugins_url('js/report-troop.js', dirname(__FILE__)), array( 'jquery', 'jquery-form', 'json2' ), false, true );
+        wp_enqueue_script( 'ns-report-unit', plugins_url('js/report-unit.js', dirname(__FILE__)), array( 'jquery', 'jquery-form', 'json2' ), false, true );
         wp_enqueue_style( 'ns-autocomplete-css', plugins_url('css/autocomplete.css', dirname(__FILE__)));
         # this puts the ajax URL into nslodge_ajax.ajaxurl for the page javascript
-        wp_localize_script( 'ns-report-troop', 'nslodge_ajax', array( 'ajaxurl' => admin_url( 'admin-ajax.php' ) ) );
+        wp_localize_script( 'ns-report-unit', 'nslodge_ajax', array( 'ajaxurl' => admin_url( 'admin-ajax.php' ) ) );
+    }
+    if ($_SERVER['REQUEST_URI'] == '/ue/report-scoutentry') {
+        wp_enqueue_script( 'ns-report-scout', plugins_url('js/report-scout.js', dirname(__FILE__)), array( 'jquery', 'jquery-form', 'json2' ), false, true );
+    }
+    if ($_SERVER['REQUEST_URI'] == '/ue/report-complete') {
+        wp_enqueue_script( 'ns-report-complete', plugins_url('js/report-complete.js', dirname(__FILE__)), array( 'jquery', 'jquery-form', 'json2' ), false, true );
     }
     if ($_SERVER['REQUEST_URI'] == '/ue/adultnomination') {
         wp_enqueue_script('jquery-ui-autocomplete', '', array('jquery-ui-widget', 'jquery-ui-position'), '1.8.6');
@@ -45,12 +51,12 @@ function ns_get_troops_autocomplete() {
     $term = $_GET['term'];
     $term = intval($term);
     $results = $wpdb->get_results($wpdb->prepare("
-        SELECT unit_num, ch.ChapterName AS chapter_name, SelectorName, district_name, unit_city, charter_org
-        FROM wp_oa_troops AS tr
-        LEFT JOIN wp_oa_chapters AS ch ON tr.chapter_num = ch.chapter_num
-        LEFT JOIN wp_oa_districts AS di ON tr.district_num = di.district_num
-        WHERE tr.unit_num LIKE %s
-        ORDER BY tr.unit_num
+        SELECT unit_type, unit_num, ch.ChapterName AS chapter_name, SelectorName, district_name, unit_city, charter_org, ul_full_name, cc_full_name
+        FROM wp_oa_units AS un
+        LEFT JOIN wp_oa_chapters AS ch ON un.chapter_num = ch.chapter_num
+        LEFT JOIN wp_oa_districts AS di ON un.district_num = di.district_num
+        WHERE un.unit_num LIKE %s
+        ORDER BY un.unit_num
     ", Array("%" . $term . "%")));
     wp_send_json($results);
 

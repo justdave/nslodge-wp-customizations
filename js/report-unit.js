@@ -3,7 +3,7 @@ var $j = jQuery.noConflict();
 $j(document).ready(function(){
   $j('.entry-content form:first').submit(function(){
     var foo = {};
-    $j(this).find('input[type=text], input[type=number], input[type=date], select').each(function(){
+    $j(this).find('input[type=text], input[type=hidden], input[type=number], input[type=date], select').each(function(){
       foo[$j(this).attr('name')] = $j(this).val();
     });
     document.cookie = 'formData='+JSON.stringify(foo);
@@ -34,9 +34,11 @@ $j(document).ready(function(){
           $j('input[name=NumberElected]').val(0);
           if ($j('#election_type').val() == 'noone_eligible') {
               $j('textarea[name=AdditionalInfo]').val('No one was eligible this year.');
+              $j('select[name=notification]').val('We have no candidates to notify');
           }
           else if ($j('#election_type').val() == 'non_participant') {
               $j('textarea[name=AdditionalInfo]').val('This troop does not participate in the OA.');
+              $j('select[name=notification]').val('We have no candidates to notify');
           }
       }
       else if ($j('#election_type').val() == '') {
@@ -47,8 +49,10 @@ $j(document).ready(function(){
   $j('#troopsearch').autocomplete({
     source: nslodge_ajax.ajaxurl + '?action=ns_get_troops_autocomplete',
     select: function( event, ui ) {
-        $j("select[name=ChapterName]").val(ui.item.SelectorName).change();
+        $j("input[name=ChapterName]").val(ui.item.chapter_name);
+        $j("input[name=UnitType]").val(ui.item.unit_type);
         $j("input[name=UnitNumber]").val(ui.item.unit_num);
+        $j("input[name=UnitLeaderName]").val(ui.item.ul_full_name);
         $j('#troop_result').html(ui.item.label);
         $j('#troop_picker').hide();
         $j('#troop_picked').show();
@@ -61,7 +65,7 @@ $j(document).ready(function(){
     if (city.length > 2) {
         city = ' - ' + city;
     }
-    item.label = item.district_name + " - Troop " + item.unit_num + city + " (" + item.SelectorName + ")";
+    item.label = item.district_name + " - " + item.unit_type + " " + item.unit_num + city + " (" + item.SelectorName + ")";
     li = $j('<li>')
       .attr("data-value", JSON.stringify(item))
       .append(item.label)
