@@ -32,17 +32,18 @@ function my_enqueue($hook) {
 
 add_action( 'init', 'ns_ue_permalinks' );
 function ns_ue_permalinks() {
+    add_rewrite_tag('%chapter%','([^&]+)');
     add_rewrite_rule(
-        'ue/dashboard/chapter-(.+)/?',
+        'ue/dashboard/chapter-([abcde])/?$',
         'index.php?page_id=1999&chapter=$matches[1]',
         'top'
     );
 }
-add_filter( 'query_vars', 'ns_ue_query_vars' );
-function ns_ue_query_vars( $query_vars ) {
-    $query_vars[] = 'chapter';
-    return $query_vars;
-}
+#add_filter( 'query_vars', 'ns_ue_query_vars' );
+#function ns_ue_query_vars( $query_vars ) {
+#    $query_vars[] = 'chapter';
+#    return $query_vars;
+#}
 
 function ns_election_widget() {
     global $wpdb;
@@ -52,15 +53,15 @@ function ns_election_widget() {
     $results = $wpdb->get_results("
 SELECT
     unit.chapter_num AS chapter,
-    unit.unit_type AS unit_type
+    unit.unit_type AS unit_type,
     unit.unit_num AS unit_num,
     COUNT(rpts.UnitNumber) AS num_reports,
-    COUNT(sch.tnum) AS num_reqs
+    COUNT(sch.UnitNum) AS num_reqs
 FROM
     wp_oa_units AS unit
     LEFT JOIN wp_oa_chapters AS chp ON BINARY unit.chapter_num = BINARY chp.chapter_num
     LEFT JOIN wp_oa_ue_troops AS rpts ON BINARY CONCAT('0', chp.chapter_num, ' - ', chp.ChapterName) = BINARY rpts.ChapterName AND BINARY unit.unit_num = BINARY rpts.UnitNumber
-    LEFT JOIN wp_oa_ue_schedules AS sch ON BINARY unit.chapter_num = BINARY sch.ChapterNumber AND BINARY unit.unit_num = BINARY sch.tnum
+    LEFT JOIN wp_oa_ue_schedules AS sch ON BINARY chp.ChapterName = BINARY sch.ChapterName AND BINARY unit.unit_type = BINARY sch.UnitType AND BINARY unit.unit_num = BINARY sch.UnitNum
 GROUP BY unit.chapter_num, unit.unit_num
 ORDER BY unit.chapter_num, unit.unit_num
 ");
@@ -87,21 +88,25 @@ ORDER BY unit.chapter_num, unit.unit_num
         if (!array_key_exists($row->chapter, $data)) {
             $data[$row->chapter] = [];
         }
-        if (!array_key_exists($row->troop, $data[$row->chapter])) {
-            $data[$row->chapter][$row->troop] = [];
+        if (!array_key_exists($row->unit_type, $data[$row->chapter])) {
+            $data[$row->chapter][$row->unit_type] = [];
         }
-        $data[$row->chapter][$row->troop]['num_reports'] = $row->num_reports;
-        $data[$row->chapter][$row->troop]['num_reqs'] = $row->num_reqs;
-        $data[$row->chapter][$row->troop]['scheduled'] = 0;
+        if (!array_key_exists($row->unit_num, $data[$row->chapter][$row->unit_type])) {
+            $data[$row->chapter][$row->unit_type][$row->unit_num] = [];
+        }
+        $data[$row->chapter][$row->unit_type][$row->unit_num]['num_reports'] = $row->num_reports;
+        $data[$row->chapter][$row->unit_type][$row->unit_num]['num_reqs'] = $row->num_reqs;
+        $data[$row->chapter][$row->unit_type][$row->unit_num]['scheduled'] = 0;
         if ((array_key_exists($row->chapter, $elecscheds)) &&
-             (array_key_exists($row->troop, $elecscheds[$row->chapter]))) {
-            $data[$row->chapter][$row->troop]['scheduled'] = 1;
+             (array_key_exists($row->unit_type, $elecscheds[$row->chapter])) &&
+             (array_key_exists($row->unit_num, $elecscheds[$row->chapter][$row->unit_type]))) {
+            $data[$row->chapter][$row->unit_type][$row->unit_num]['scheduled'] = 1;
         }
-        if ($data[$row->chapter][$row->troop]['num_reports'] > 0) {
+        if ($data[$row->chapter][$row->unit_type][$row->unit_num]['num_reports'] > 0) {
             $completed[$row->chapter] = $completed[$row->chapter] + 1;
-        } else if ($data[$row->chapter][$row->troop]['scheduled'] > 0) {
+        } else if ($data[$row->chapter][$row->unit_type][$row->unit_num]['scheduled'] > 0) {
             $scheduled[$row->chapter] = $scheduled[$row->chapter] + 1;
-        } else if ($data[$row->chapter][$row->troop]['num_reqs'] > 0) {
+        } else if ($data[$row->chapter][$row->unit_type][$row->unit_num]['num_reqs'] > 0) {
             $requested[$row->chapter] = $requested[$row->chapter] + 1;
         }
         $num_troops[$row->chapter] = $num_troops[$row->chapter] + 1;
@@ -239,9 +244,10 @@ function nslodge_ue_dashboard_chapter() {
         $election_admin = 1;
     }
     ob_start();
-    $chapter = get_query_var('chapter');
-    $chaptername = $wpdb->get_var($wpdb->prepare("SELECT ChapterName FROM wp_oa_chapters WHERE chapter_num = %d", Array($chapter)));
-    echo "<h2>Election information for Chapter " . htmlspecialchars($chapter) . " - " . htmlspecialchars($chaptername) . "</h2>\n";
+    $chapterletter = get_query_var('chapter');
+    $chaptername = $wpdb->get_var($wpdb->prepare("SELECT SelectorName FROM wp_oa_chapters WHERE ChapterName = %s", Array($chapterletter)));
+    $chapter = $wpdb->get_var($wpdb->prepare("SELECT chapter_num FROM wp_oa_chapters WHERE ChapterName = %s", Array($chapterletter)));
+    echo "<h2>Election information for Chapter " . htmlspecialchars($chapterletter) . " - " . htmlspecialchars($chaptername) . "</h2>\n";
     if (!$election_committee) {
         echo "<p>Please log in to an account with permission to view this data.</p>\n";
     } else {
@@ -251,14 +257,15 @@ SELECT
     id,
     COUNT(rpts.UnitNumber) AS reports,
     MAX(rpts.ElectionDate) AS election_date,
-    COUNT(sched.tnum) AS requests,
+    COUNT(sched.UnitNum) AS requests,
     district_name,
+    unit_type,
     unit_num,
     unit_city,
     charter_org,
-    sm_full_name,
-    sm_phone_number,
-    sm_email,
+    ul_full_name,
+    ul_phone_number,
+    ul_email,
     cc_full_name,
     cc_phone_number,
     cc_email,
@@ -269,28 +276,26 @@ SELECT
     rep_phone_number,
     rep_email
 FROM
-    wp_oa_troops AS tr
+    wp_oa_units AS un
         LEFT JOIN
-    wp_oa_chapters AS ch ON tr.chapter_num = ch.chapter_num
+    wp_oa_chapters AS ch ON un.chapter_num = ch.chapter_num
         LEFT JOIN
-    wp_oa_districts AS di ON tr.district_num = di.district_num
+    wp_oa_districts AS di ON un.district_num = di.district_num
         LEFT JOIN
-    wp_oa_ue_troops AS rpts ON BINARY CONCAT('0',
-            ch.chapter_num,
-            ' - ',
-            ch.ChapterName) = BINARY rpts.ChapterName
-        AND BINARY tr.unit_num = BINARY rpts.UnitNumber
+    wp_oa_ue_troops AS rpts ON BINARY ch.ChapterName = BINARY rpts.ChapterName
+        AND BINARY un.unit_type = BINARY rpts.UnitType
+        AND BINARY un.unit_num = BINARY rpts.UnitNumber
         LEFT JOIN
-    wp_oa_ue_schedules AS sched ON tr.chapter_num = sched.ChapterNumber AND tr.unit_num = sched.tnum
+    wp_oa_ue_schedules AS sched ON BINARY ch.SelectorName = BINARY sched.ChapterName AND BINARY un.unit_type = BINARY sched.UnitType AND BINARY un.unit_num = BINARY sched.UnitNum
 WHERE
-    tr.chapter_num = %d
-GROUP BY tr.district_num , tr.unit_num
-ORDER BY tr.unit_num , tr.district_num
+    un.chapter_num = %d
+GROUP BY un.district_num, un.unit_type, un.unit_num
+ORDER BY un.unit_type, un.unit_num, un.district_num
     ",
         Array($chapter)));
         $elecscheds = nslodge_ue_getelections($chapter);
         echo '<table class="wp_table oa_chapter_info">';
-        echo "\n<tr><th>Status</th><th>Reports Filed</th><th>District</th><th>Troop</th><th>City</th><th>Election Date</th><th>Scoutmaster</th><th>Committee Chair</th><th>OA Rep</th></tr>\n";
+        echo "\n<tr><th>Status</th><th>Reports Filed</th><th>District</th><th colspan='2'>Unit</th><th>City</th><th>Election Date</th><th>Scoutmaster</th><th>Committee Chair</th><th>OA Rep</th></tr>\n";
         foreach ($results as $row) {
             $status = 'Not Scheduled';
             $rowcolor = '#f22';
@@ -322,10 +327,10 @@ ORDER BY tr.unit_num , tr.district_num
                 $election_date = date("Y-m-d",strtotime($election_date));
             }
             $row->election_date = $election_date;
-            foreach (Array('reports','district_name','unit_num','unit_city','election_date') as $item) {
+            foreach (Array('reports','district_name','unit_type','unit_num','unit_city','election_date') as $item) {
                 echo "<td>" . htmlspecialchars($row->$item) . "</td>\n";
             }
-            echo "<td>" . htmlspecialchars($row->sm_full_name) . "<br>" . htmlspecialchars($row->sm_email) . "<br>" . htmlspecialchars($row->sm_phone_number) . "</td>\n";
+            echo "<td>" . htmlspecialchars($row->ul_full_name) . "<br>" . htmlspecialchars($row->ul_email) . "<br>" . htmlspecialchars($row->ul_phone_number) . "</td>\n";
             echo "<td>" . htmlspecialchars($row->cc_full_name) . "<br>" . htmlspecialchars($row->cc_email) . "<br>" . htmlspecialchars($row->cc_phone_number) . "</td>\n";
             echo "<td>" . htmlspecialchars($row->rep_full_name) . "<br>" . htmlspecialchars($row->rep_email) . "<br>" . htmlspecialchars($row->rep_phone_number) . "</td>\n";
             echo "</tr>\n";
@@ -389,11 +394,11 @@ function nslodge_ue_dashboard_list_chapters() {
     </div>
     <?php if ($election_committee) { ?>
     <p style="text-align: center;">Chapter details:
-    <a href="<?php echo htmlspecialchars($homeurl) ?>/ue/dashboard/chapter-a">Chapter A</a>
-    <a href="<?php echo htmlspecialchars($homeurl) ?>/ue/dashboard/chapter-b">Chapter B</a>
-    <a href="<?php echo htmlspecialchars($homeurl) ?>/ue/dashboard/chapter-c">Chapter C</a>
-    <a href="<?php echo htmlspecialchars($homeurl) ?>/ue/dashboard/chapter-d">Chapter D</a>
-    <a href="<?php echo htmlspecialchars($homeurl) ?>/ue/dashboard/chapter-e">Chapter E</a>
+    <a href="<?php echo htmlspecialchars($homeurl) ?>/ue/dashboard?chapter=a">Chapter A</a>
+    <a href="<?php echo htmlspecialchars($homeurl) ?>/ue/dashboard?chapter=b">Chapter B</a>
+    <a href="<?php echo htmlspecialchars($homeurl) ?>/ue/dashboard?chapter=c">Chapter C</a>
+    <a href="<?php echo htmlspecialchars($homeurl) ?>/ue/dashboard?chapter=d">Chapter D</a>
+    <a href="<?php echo htmlspecialchars($homeurl) ?>/ue/dashboard?chapter=e">Chapter E</a>
     </p>
     <?php
     } ?>

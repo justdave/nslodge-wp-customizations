@@ -24,7 +24,7 @@ function nslodge_ue_getelections($chapter) {
     if (is_admin()) {
         new SimpleCalendar\Assets();
     }
-    $min_date = strtotime("2017-11-01");
+    $min_date = strtotime("2018-11-01");
     $calendar_id = [
         "all" => 1732,
         1 => 1722,
@@ -47,10 +47,12 @@ function nslodge_ue_getelections($chapter) {
             $this_event = $this_day[$num];
             $title = $this_event->title;
             $start = $this_event->start;
-            preg_match("/[Cc]hapter (\d+)/",$title,$matches);
+            preg_match("/[Cc]hapter ([AaBbCcDdEe])/",$title,$matches);
             $this_chapter = $matches[1];
-            preg_match("/[Tt]roop (\d+)/",$title,$matches);
-            $troop = $matches[1];
+            preg_match("/([Tt]roop|[Cc]rew|[Ss]hip) (\d+)/",$title,$matches);
+            $unit_type = $matches[1];
+            $unit_num = $matches[2];
+            $troop = "$unit_type $unit_num";
             if (!array_key_exists($this_chapter, $elecscheds)) {
                 $elecscheds[$this_chapter] = [];
             }
@@ -64,29 +66,29 @@ function nslodge_ue_getelections($chapter) {
 function nslodge_ue_getschedreqs($chapter) {
     global $wpdb;
     if ($chapter == 'all') {
-    $results = $wpdb->get_results($wpdb->prepare("SELECT Chapter, Troop, ReqDate, Priority FROM (
-SELECT ChapterNumber AS Chapter, tnum AS Troop, `e-date-1` AS ReqDate, '1' AS Priority FROM wp_oa_ue_schedules
+    $results = $wpdb->get_results($wpdb->prepare("SELECT Chapter, UnitType, UnitNum, ReqDate, Priority FROM (
+SELECT ChapterName AS Chapter, UnitType, UnitNum, `e-date-1` AS ReqDate, '1' AS Priority FROM wp_oa_ue_schedules
 UNION
-SELECT ChapterNumber AS Chapter, tnum AS Troop, `e-date-2` AS ReqDate, '2' AS Priority FROM wp_oa_ue_schedules
+SELECT ChapterName AS Chapter, UnitType, UnitNum, `e-date-2` AS ReqDate, '2' AS Priority FROM wp_oa_ue_schedules
 UNION
-SELECT ChapterNumber AS Chapter, tnum AS Troop, `e-date-3` AS ReqDate, '3' AS Priority FROM wp_oa_ue_schedules
+SELECT ChapterName AS Chapter, UnitType, UnitNum, `e-date-3` AS ReqDate, '3' AS Priority FROM wp_oa_ue_schedules
 ) AS sched
 ORDER BY ReqDate, Priority", array($chapter)));
     } else {
-    $results = $wpdb->get_results($wpdb->prepare("SELECT Chapter, Troop, ReqDate, Priority FROM (
-SELECT ChapterNumber AS Chapter, tnum AS Troop, `e-date-1` AS ReqDate, '1' AS Priority FROM wp_oa_ue_schedules
+    $results = $wpdb->get_results($wpdb->prepare("SELECT Chapter, UnitType, UnitNum, ReqDate, Priority FROM (
+SELECT ChapterName AS Chapter, UnitType, UnitNum, `e-date-1` AS ReqDate, '1' AS Priority FROM wp_oa_ue_schedules
 UNION
-SELECT ChapterNumber AS Chapter, tnum AS Troop, `e-date-2` AS ReqDate, '2' AS Priority FROM wp_oa_ue_schedules
+SELECT ChapterName AS Chapter, UnitType, UnitNum, `e-date-2` AS ReqDate, '2' AS Priority FROM wp_oa_ue_schedules
 UNION
-SELECT ChapterNumber AS Chapter, tnum AS Troop, `e-date-3` AS ReqDate, '3' AS Priority FROM wp_oa_ue_schedules
+SELECT ChapterName AS Chapter, UnitType, UnitNum, `e-date-3` AS ReqDate, '3' AS Priority FROM wp_oa_ue_schedules
 ) AS sched
-WHERE Chapter=%d
-ORDER BY ReqDate, Priority", array($chapter)));
+WHERE ChapterName=%s
+ORDER BY ReqDate, Priority", array("Chapter $chapter")));
     }
     $schedreqs = [];
 
     foreach ($results as $row) {
-        $schedreqs[$row->Chapter][$row->Troop][$row->Priority] = $row->ReqDate;
+        $schedreqs[$row->Chapter][$row->UnitType][$row->UnitNum][$row->Priority] = $row->ReqDate;
     }
     return $schedreqs;
 }
@@ -103,30 +105,30 @@ function nslodge_ue_schedreqs( $attrs ) {
     global $wpdb;
     if ($chapter == 'all') {
     $results = $wpdb->get_results("
-SELECT Chapter, Troop, ReqDate, Priority, COUNT(rpts.UnitNumber) as Reports FROM (
-SELECT ChapterNumber AS Chapter, tnum AS Troop, `e-date-1` AS ReqDate, '1' AS Priority FROM wp_oa_ue_schedules
+SELECT Chapter, sched.UnitType, sched.UnitNum, ReqDate, Priority, COUNT(rpts.UnitNumber) as Reports FROM (
+SELECT ChapterName AS Chapter, UnitType, UnitNum, `e-date-1` AS ReqDate, '1' AS Priority FROM wp_oa_ue_schedules
 UNION
-SELECT ChapterNumber AS Chapter, tnum AS Troop, `e-date-2` AS ReqDate, '2' AS Priority FROM wp_oa_ue_schedules
+SELECT ChapterName AS Chapter, UnitType, UnitNum, `e-date-2` AS ReqDate, '2' AS Priority FROM wp_oa_ue_schedules
 UNION
-SELECT ChapterNumber AS Chapter, tnum AS Troop, `e-date-3` AS ReqDate, '3' AS Priority FROM wp_oa_ue_schedules
+SELECT ChapterName AS Chapter, UnitType, UnitNum, `e-date-3` AS ReqDate, '3' AS Priority FROM wp_oa_ue_schedules
 ) AS sched
-LEFT JOIN wp_oa_chapters AS chp ON BINARY sched.Chapter = BINARY chp.chapter_num
-LEFT JOIN wp_oa_ue_troops AS rpts ON BINARY CONCAT('0', chp.chapter_num, ' - ', chp.ChapterName) = BINARY rpts.ChapterName AND BINARY sched.Troop = BINARY rpts.UnitNumber
-GROUP BY Chapter, Troop, Priority
+LEFT JOIN wp_oa_chapters AS chp ON BINARY sched.Chapter = BINARY chp.SelectorName
+LEFT JOIN wp_oa_ue_units AS rpts ON BINARY chp.ChapterName = BINARY rpts.ChapterName AND BINARY sched.UnitType = BINARY rpts.UnitType AND BINARY sched.UnitNum = BINARY rpts.UnitNumber
+GROUP BY Chapter, UnitType, UnitNum, Priority
 ORDER BY ReqDate, Priority");
     } else {
     $results = $wpdb->get_results($wpdb->prepare("
-SELECT Chapter, Troop, ReqDate, Priority, COUNT(rpts.UnitNumber) as Reports FROM (
-SELECT ChapterNumber AS Chapter, tnum AS Troop, `e-date-1` AS ReqDate, '1' AS Priority FROM wp_oa_ue_schedules
+SELECT Chapter, sched.UnitType, sched.UnitNum, ReqDate, Priority, COUNT(rpts.UnitNumber) as Reports FROM (
+SELECT ChapterName AS Chapter, UnitType, UnitNum, `e-date-1` AS ReqDate, '1' AS Priority FROM wp_oa_ue_schedules
 UNION
-SELECT ChapterNumber AS Chapter, tnum AS Troop, `e-date-2` AS ReqDate, '2' AS Priority FROM wp_oa_ue_schedules
+SELECT ChapterName AS Chapter, UnitType, UnitNum, `e-date-2` AS ReqDate, '2' AS Priority FROM wp_oa_ue_schedules
 UNION
-SELECT ChapterNumber AS Chapter, tnum AS Troop, `e-date-3` AS ReqDate, '3' AS Priority FROM wp_oa_ue_schedules
+SELECT ChapterName AS Chapter, UnitType, UnitNum, `e-date-3` AS ReqDate, '3' AS Priority FROM wp_oa_ue_schedules
 ) AS sched
-LEFT JOIN wp_oa_chapters AS chp ON BINARY sched.Chapter = BINARY chp.chapter_num
-LEFT JOIN wp_oa_ue_troops AS rpts ON BINARY CONCAT('0', chp.chapter_num, ' - ', chp.ChapterName) = BINARY rpts.ChapterName AND BINARY sched.Troop = BINARY rpts.UnitNumber
+LEFT JOIN wp_oa_chapters AS chp ON BINARY sched.Chapter = BINARY chp.SelectorName
+LEFT JOIN wp_oa_ue_units AS rpts ON BINARY chp.ChapterName = BINARY rpts.ChapterName AND BINARY sched.UnitType = BINARY rpts.UnitType AND BINARY sched.UnitNum = BINARY rpts.UnitNumber
 WHERE Chapter=%d
-GROUP BY Chapter, Troop, Priority
+GROUP BY Chapter, UnitType, UnitNum, Priority
 ORDER BY ReqDate, Priority", array($chapter)));
     }
 
@@ -136,18 +138,19 @@ ORDER BY ReqDate, Priority", array($chapter)));
     $output = "";
     $output .= "<table border=1><tr>";
     if ($chapter == 'all') { $output .= "<th>Chapter</th>"; }
-    $output .= "<th>Troop</th><th>Requested Date</th><th>Troop's Priority</th></tr>\n";
+    $output .= "<th>Unit</th><th>Requested Date</th><th>Unit's Priority</th></tr>\n";
     foreach ($results as $row) {
         if ( $row->Reports == 0 ) {
             if ( !(array_key_exists($row->Chapter, $elecscheds)) ||
                ( (array_key_exists($row->Chapter, $elecscheds) ) &&
-                 (! array_key_exists($row->Troop, $elecscheds[$row->Chapter]))
+                 (! array_key_exists($row->UnitType, $elecscheds[$row->Chapter])) &&
+                 (! array_key_exists($row->UnitNum, $elecscheds[$row->Chapter][$row->UnitType]))
                )) {
                 $color = "";
                 if (strtotime($row->ReqDate) < time()) { $color = ' style="color: red;"'; }
                 $output .= "<tr>";
                 if ($chapter == 'all') { $output .= "<td>" . htmlspecialchars($row->Chapter) . "</td>"; }
-                $output .= "<td>" . htmlspecialchars($row->Troop) . "</td><td$color>" . htmlspecialchars($row->ReqDate) . "</td><td>" . htmlspecialchars($row->Priority) . "</td></tr>\n";
+                $output .= "<td>" . htmlspecialchars($row->UnitType) . " " . htmlspecialchars($row->UnitNum) . "</td><td$color>" . htmlspecialchars($row->ReqDate) . "</td><td>" . htmlspecialchars($row->Priority) . "</td></tr>\n";
             }
         }
     }
