@@ -1,5 +1,8 @@
 <?php
 
+require "vendor/autoload.php";
+use Dompdf\Dompdf;
+
 $html = "";
 
 function drawballot($cssclass) {
@@ -27,11 +30,6 @@ if (isset($_POST['names'])) {
   <html>
   <head>
   <title>Unit Election Ballot</title>
-  <script type="text/javascript"><!--
-  document.addEventListener("DOMContentLoaded", function(event) {
-      window.print();
-  });
-  --></script>
   <style type="text/css"><1--
 @page {
     size: letter;
@@ -43,30 +41,30 @@ html {
 }
 body {
     font-family: DejaVu Sans;
-    font-size: 12pt;
+    font-size: 9pt;
     height: 100%;
     width: 100%;
 }
 p {
     margin: 0;
-    font-size: 10pt;
+    font-size: 7pt;
 }
 .left {
     left: 0in;
 }
 .right {
-    left: 5in;
+    left: 4.25in;
 }
 .top {
     top: 0in;
 }
 .bottom {
-    top: 6.5in;
+    top: 5.25in;
 }
 .oneballot {
     position: absolute;
     border-collapse: collapse;
-    width: 3.5in;
+    width: 3.25in;
     height: 5in;
 }
 .ballotrow {
@@ -103,5 +101,16 @@ p {
 if ($html == "") {
     echo "No names were entered. Please use your browser's back button and try again.";
 } else {
-    echo $html;
+    $DEBUG = 0;
+    if ($DEBUG) {
+        echo $html;
+    } else {
+        $dompdf = new Dompdf();
+        $dompdf->set_option('isHtml5ParserEnabled', true);
+        $dompdf->setPaper('letter','portrait');
+        $dompdf->loadHtml($html);
+        $dompdf->render();
+        $dompdf->stream("ballot.pdf");
+        //$dompdf->stream("ballot.pdf", array("Attachment"=>0));
+    }
 }
