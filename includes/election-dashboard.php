@@ -60,7 +60,7 @@ SELECT
 FROM
     wp_oa_units AS unit
     LEFT JOIN wp_oa_chapters AS chp ON BINARY unit.chapter_num = BINARY chp.chapter_num
-    LEFT JOIN wp_oa_ue_troops AS rpts ON BINARY CONCAT('0', chp.chapter_num, ' - ', chp.ChapterName) = BINARY rpts.ChapterName AND BINARY unit.unit_num = BINARY rpts.UnitNumber
+    LEFT JOIN wp_oa_ue_units AS rpts ON BINARY CONCAT('0', chp.chapter_num, ' - ', chp.ChapterName) = BINARY rpts.ChapterName AND BINARY unit.unit_num = BINARY rpts.UnitNumber
     LEFT JOIN wp_oa_ue_schedules AS sch ON BINARY chp.ChapterName = BINARY sch.ChapterName AND BINARY unit.unit_type = BINARY sch.UnitType AND BINARY unit.unit_num = BINARY sch.UnitNum
 GROUP BY unit.chapter_num, unit.unit_num
 ORDER BY unit.chapter_num, unit.unit_num
@@ -282,7 +282,7 @@ FROM
         LEFT JOIN
     wp_oa_districts AS di ON un.district_num = di.district_num
         LEFT JOIN
-    wp_oa_ue_troops AS rpts ON BINARY ch.ChapterName = BINARY rpts.ChapterName
+    wp_oa_ue_units AS rpts ON BINARY ch.ChapterName = BINARY rpts.ChapterName
         AND BINARY un.unit_type = BINARY rpts.UnitType
         AND BINARY un.unit_num = BINARY rpts.UnitNumber
         LEFT JOIN
