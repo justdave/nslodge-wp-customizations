@@ -295,7 +295,7 @@ ORDER BY un.unit_type, un.unit_num, un.district_num
         Array($chapter)));
         $elecscheds = nslodge_ue_getelections($chapter);
         echo '<table class="wp_table oa_chapter_info">';
-        echo "\n<tr><th>Status</th><th>Reports Filed</th><th>District</th><th colspan='2'>Unit</th><th>City</th><th>Election Date</th><th>Scoutmaster</th><th>Committee Chair</th><th>OA Rep</th></tr>\n";
+        echo "\n<tr><th>Status</th><th>Reports Filed</th><th>District</th><th colspan='2'>Unit</th><th>City</th><th>Election Date</th><th>Unit Leader</th><th>Committee Chair</th><th>OA Rep</th></tr>\n";
         foreach ($results as $row) {
             $status = 'Not Scheduled';
             $rowcolor = '#f22';
