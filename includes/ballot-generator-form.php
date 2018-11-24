@@ -32,7 +32,7 @@ function nslodge_ue_ballotgen() {
         <input type="button" onclick="javascript:;" id="addRow" value="Add Scout" style="margin-bottom: 10px;"><br />
         <input type="text" name="names[0][name]">
     </div>
-<p>    <input type="submit" id="submit" value="Print Ballot" style="margin-top: 10px;" /><br />
+<p>    <input type="submit" id="submit" value="Download Ballot" style="margin-top: 10px;" /><br />
 </form><?php
   return ob_get_clean();
 }
