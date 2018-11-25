@@ -457,7 +457,6 @@ function nslodge_ue_dashboard_list_chapters() {
     </div>
     <div id="ue_master_chart" style="width: 500px; float: right;">
     <h5 style="margin-top: 0px;">2018-2019 Unit Election Status</h5>
-    <p>This page is under construction to remodel for the new election year and new chapters. Please check back later!</p>
     <?php
     ns_election_widget();
     ?>

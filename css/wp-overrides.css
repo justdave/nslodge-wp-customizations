@@ -6,10 +6,12 @@ input, textarea {
 }
 .oa_chapter_info td {
     border-bottom: 1px solid black;
+    border-right: 1px solid rgba(200,200,200,0.5);
     white-space: nowrap;
 }
 .oa_chapter_info th {
     border-bottom: 1px solid black;
+    border-right: 1px solid rgba(200,200,200,0.5);
     background: #fff;
     hyphens: none;
 }
