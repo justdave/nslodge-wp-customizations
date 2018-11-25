@@ -1,10 +1,15 @@
 input, textarea {
   border: 1px solid rgba(0, 0, 0, 0.3)!important;
 }
+.oa_chapter_info {
+    border: 1px solid black;
+}
 .oa_chapter_info td {
+    border-bottom: 1px solid black;
     white-space: nowrap;
 }
 .oa_chapter_info th {
+    border-bottom: 1px solid black;
     background: #fff;
     hyphens: none;
 }

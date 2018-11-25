@@ -45,30 +45,41 @@ function ns_ue_permalinks() {
 #    return $query_vars;
 #}
 
-function ns_election_widget() {
+function ns_get_electdata($chapter = "all") {
     global $wpdb;
-    if (is_admin()) {
-        ?><a href="/ue/dashboard">Go to Unit Elections Dashboard</a><br><?php
-    }
-    $results = $wpdb->get_results("
+    $query = "
 SELECT
     unit.chapter_num AS chapternum,
     chp.ChapterName AS chapter,
     unit.unit_type AS unit_type,
     unit.unit_num AS unit_num,
     COUNT(rpts.UnitNumber) AS num_reports,
+    MAX(rpts.ElectionDate) AS electiondate,
     COUNT(sch.UnitNum) AS num_reqs
 FROM
     wp_oa_units AS unit
     LEFT JOIN wp_oa_chapters AS chp ON BINARY unit.chapter_num = BINARY chp.chapter_num
     LEFT JOIN wp_oa_ue_units AS rpts ON BINARY chp.ChapterName = BINARY rpts.ChapterName AND BINARY unit.unit_type = BINARY rpts.UnitType AND BINARY unit.unit_num = BINARY rpts.UnitNumber
     LEFT JOIN wp_oa_ue_schedules AS sch ON BINARY chp.SelectorName = BINARY sch.ChapterName AND BINARY unit.unit_type = BINARY sch.UnitType AND BINARY unit.unit_num = BINARY sch.UnitNum
+";
+    if (!($chapter == "all")) {
+        $query = $query . "WHERE chp.ChapterName = %s";
+    }
+    $query = $query . "
 GROUP BY unit.chapter_num, unit.unit_type, unit.unit_num
 ORDER BY unit.chapter_num, unit.unit_type, unit.unit_num
-");
+";
+    if (!($chapter == "all")) {
+        $q = $wpdb->prepare($query, Array( $chapter ) );
+    } else {
+        $q = $query;
+    }
+    $results = $wpdb->get_results($q);
 
     $completed = [];
     $scheduled = [];
+    $notscheduled = [];
+    $pastdue = [];
     $requested = [];
     $num_units = [];
     $data = [];
@@ -80,6 +91,12 @@ ORDER BY unit.chapter_num, unit.unit_type, unit.unit_num
         }
         if (!array_key_exists($row->chapter, $scheduled)) {
             $scheduled[$row->chapter] = 0;
+        }
+        if (!array_key_exists($row->chapter, $notscheduled)) {
+            $notscheduled[$row->chapter] = 0;
+        }
+        if (!array_key_exists($row->chapter, $pastdue)) {
+            $pastdue[$row->chapter] = 0;
         }
         if (!array_key_exists($row->chapter, $requested)) {
             $requested[$row->chapter] = 0;
@@ -96,20 +113,59 @@ ORDER BY unit.chapter_num, unit.unit_type, unit.unit_num
         $data[$row->chapter][$unit]['num_reports'] = $row->num_reports;
         $data[$row->chapter][$unit]['num_reqs'] = $row->num_reqs;
         $data[$row->chapter][$unit]['scheduled'] = 0;
+        $data[$row->chapter][$unit]['election_date'] = '';
         if ((array_key_exists($row->chapter, $elecscheds)) &&
              (array_key_exists($unit, $elecscheds[$row->chapter])) ) {
             $data[$row->chapter][$unit]['scheduled'] = 1;
+            $data[$row->chapter][$unit]['election_date'] = $elecscheds[$row->chapter][$unit];
         }
         if ($data[$row->chapter][$unit]['num_reports'] > 0) {
             $completed[$row->chapter] = $completed[$row->chapter] + 1;
+            $data[$row->chapter][$unit]['status'] = 'completed';
+            $data[$row->chapter][$unit]['election_date'] = $row->electiondate;
         } else if ($data[$row->chapter][$unit]['scheduled'] > 0) {
-            $scheduled[$row->chapter] = $scheduled[$row->chapter] + 1;
+            if (strtotime($data[$row->chapter][$unit]['election_date']) < time()) {
+                $pastdue[$row->chapter] = $pastdue[$row->chapter] + 1;
+                $data[$row->chapter][$unit]['status'] = 'pastdue';
+            } else {
+                $scheduled[$row->chapter] = $scheduled[$row->chapter] + 1;
+                $data[$row->chapter][$unit]['status'] = 'scheduled';
+            }
         } else if ($data[$row->chapter][$unit]['num_reqs'] > 0) {
             $requested[$row->chapter] = $requested[$row->chapter] + 1;
+            $data[$row->chapter][$unit]['status'] = 'requested';
+        } else {
+            $notscheduled[$row->chapter] = $notscheduled[$row->chapter] + 1;
+            $data[$row->chapter][$unit]['status'] = 'notscheduled';
         }
         $num_units[$row->chapter] = $num_units[$row->chapter] + 1;
     }
+    $elecdata = [
+        "completed" => $completed,
+        "notscheduled" => $notscheduled,
+        "scheduled" => $scheduled,
+        "requested" => $requested,
+        "pastdue"   => $pastdue,
+        "num_units" => $num_units,
+        "data"      => $data
+    ];
+    #ob_start();
+    #var_dump($elecdata);
+    #error_log(ob_get_clean());
+    return $elecdata;
+}
 
+function ns_election_widget() {
+    if (is_admin()) {
+        ?><a href="/ue/dashboard">Go to Unit Elections Dashboard</a><br><?php
+    }
+    $elecdata = ns_get_electdata();
+    $completed = $elecdata['completed'];
+    $scheduled = $elecdata['scheduled'];
+    $notscheduled = $elecdata['notscheduled'];
+    $pastdue = $elecdata['pastdue'];
+    $requested = $elecdata['requested'];
+    $num_units = $elecdata['num_units'];
     ?>
 <canvas id="nsElectionChart" width="200" height="100"></canvas>
 <script type="text/javascript">
@@ -126,16 +182,31 @@ var ue_chartconfig = {
             $total_units = 0;
             foreach (array_keys($completed) AS $key) {
                 if ($total_units > 0) { echo ","; };
-                $this_completed = $completed[$key];
-                $this_total = $num_units[$key];
-                echo htmlspecialchars(ceil(($completed[$key] / $num_units[$key]) * 100));
+                echo htmlspecialchars(($completed[$key] / $num_units[$key]) * 100);
                 $completed_units = $completed_units + $completed[$key];
                 $total_units = $total_units + $num_units[$key];
             }
-            echo "," . htmlspecialchars(ceil(($completed_units / $total_units) * 100));
+            echo "," . htmlspecialchars(($completed_units / $total_units) * 100);
             ?>],
             backgroundColor: 'rgba(0, 224, 255, 0.2)',
             borderColor: 'rgba(0, 224, 255, 1)',
+            borderWidth: 1
+        },
+        {
+            label: "Past Due",
+            data: [<?php
+            $pastdue_units = 0;
+            $total_units = 0;
+            foreach (array_keys($pastdue) AS $key) {
+                if ($total_units > 0) { echo ","; };
+                echo htmlspecialchars(($pastdue[$key] / $num_units[$key]) * 100);
+                $pastdue_units = $pastdue_units + $pastdue[$key];
+                $total_units = $total_units + $num_units[$key];
+            }
+            echo "," . htmlspecialchars(($pastdue_units / $total_units) * 100);
+            ?>],
+            backgroundColor: 'rgba(255, 0, 255, 0.2)',
+            borderColor: 'rgba(255, 0, 255, 1)',
             borderWidth: 1
         },
         {
@@ -145,13 +216,11 @@ var ue_chartconfig = {
             $total_units = 0;
             foreach (array_keys($scheduled) AS $key) {
                 if ($total_units > 0) { echo ","; };
-                $this_scheduled = $scheduled[$key];
-                $this_total = $num_units[$key];
-                echo htmlspecialchars(ceil(($scheduled[$key] / $num_units[$key]) * 100));
+                echo htmlspecialchars(($scheduled[$key] / $num_units[$key]) * 100);
                 $scheduled_units = $scheduled_units + $scheduled[$key];
                 $total_units = $total_units + $num_units[$key];
             }
-            echo "," . htmlspecialchars(ceil(($scheduled_units / $total_units) * 100));
+            echo "," . htmlspecialchars(($scheduled_units / $total_units) * 100);
             ?>],
             backgroundColor: 'rgba(0, 220, 0, 0.2)',
             borderColor: 'rgba(0, 220, 0, 1)',
@@ -164,16 +233,31 @@ var ue_chartconfig = {
             $total_units = 0;
             foreach (array_keys($requested) AS $key) {
                 if ($total_units > 0) { echo ","; };
-                $this_requested = $requested[$key];
-                $this_total = $num_units[$key];
-                echo htmlspecialchars(ceil(($requested[$key] / $num_units[$key]) * 100));
+                echo htmlspecialchars(($requested[$key] / $num_units[$key]) * 100);
                 $requested_units = $requested_units + $requested[$key];
                 $total_units = $total_units + $num_units[$key];
             }
-            echo "," . htmlspecialchars(ceil(($requested_units / $total_units) * 100));
+            echo "," . htmlspecialchars(($requested_units / $total_units) * 100);
             ?>],
             backgroundColor: 'rgba(255, 105, 9, 0.2)',
-            borderColor: 'rgba(255, 105, 9, 0.2)',
+            borderColor: 'rgba(255, 105, 9, 1)',
+            borderWidth: 1
+        },
+        {
+            label: "Not Scheduled Yet",
+            data: [<?php
+            $notscheduled_units = 0;
+            $total_units = 0;
+            foreach (array_keys($notscheduled) AS $key) {
+                if ($total_units > 0) { echo ","; };
+                echo htmlspecialchars(($notscheduled[$key] / $num_units[$key]) * 100);
+                $notscheduled_units = $notscheduled_units + $notscheduled[$key];
+                $total_units = $total_units + $num_units[$key];
+            }
+            echo "," . htmlspecialchars(($notscheduled_units / $total_units) * 100);
+            ?>],
+            backgroundColor: 'rgba(255, 0, 0, 0.2)',
+            borderColor: 'rgba(255, 0, 0, 1)',
             borderWidth: 1
         }
         ]
@@ -182,8 +266,13 @@ var ue_chartconfig = {
         tooltips: {
             callbacks: {
                 label: function(tooltipitem, data) {
-                    return data.datasets[tooltipitem.datasetIndex].label + ": " + tooltipitem.xLabel + "%";
+                    return data.datasets[tooltipitem.datasetIndex].label + ": " + (Math.round(tooltipitem.xLabel * 10) / 10) + "%";
                 }
+            }
+        },
+        legend: {
+            labels: {
+                boxWidth: 20
             }
         },
         scales: {
@@ -253,9 +342,6 @@ function nslodge_ue_dashboard_chapter() {
         $results = $wpdb->get_results($wpdb->prepare("
 SELECT
     id,
-    COUNT(rpts.UnitNumber) AS reports,
-    MAX(rpts.ElectionDate) AS election_date,
-    COUNT(sched.UnitNum) AS requests,
     ch.ChapterName AS chapter,
     district_name,
     unit_type,
@@ -280,56 +366,43 @@ FROM
     wp_oa_chapters AS ch ON un.chapter_num = ch.chapter_num
         LEFT JOIN
     wp_oa_districts AS di ON un.district_num = di.district_num
-        LEFT JOIN
-    wp_oa_ue_units AS rpts ON BINARY ch.ChapterName = BINARY rpts.ChapterName
-        AND BINARY un.unit_type = BINARY rpts.UnitType
-        AND BINARY un.unit_num = BINARY rpts.UnitNumber
-        LEFT JOIN
-    wp_oa_ue_schedules AS sched ON BINARY ch.SelectorName = BINARY sched.ChapterName AND BINARY un.unit_type = BINARY sched.UnitType AND BINARY un.unit_num = BINARY sched.UnitNum
 WHERE
     un.chapter_num = %d
 GROUP BY un.district_num, un.unit_type, un.unit_num
 ORDER BY un.unit_type, un.unit_num, un.district_num
     ",
         Array($chapternum)));
-        $elecscheds = nslodge_ue_getelections($chapter);
+        $elecdata = ns_get_electdata($chapter);
+        $data = $elecdata['data'];
         echo '<table class="wp_table oa_chapter_info">';
-        echo "\n<tr><th>Status</th><th>Reports Filed</th><th>District</th><th colspan='2'>Unit</th><th>City</th><th>Election Date</th><th>Unit Leader</th><th>Committee Chair</th><th>OA Rep</th></tr>\n";
+        echo "\n<tr><th>Status</th><th>Reports Filed</th><th>District</th><th>Unit</th><th>City</th><th>Election Date</th><th>Unit Leader</th><th>Committee Chair</th><th>OA Rep</th></tr>\n";
+        $statusname = [
+            "notscheduled" => "Not Scheduled",
+            "requested"    => "Requested",
+            "completed"    => "Completed",
+            "scheduled"    => "Scheduled",
+            "pastdue"      => "Missing Paperwork"
+        ];
+        $statuscolor = [
+            "notscheduled" => "#f22",
+            "requested"    => "#f82",
+            "completed"    => "cyan",
+            "scheduled"    => "#0c7",
+            "pastdue"      => "#f0f",
+        ];
         foreach ($results as $row) {
-            $status = 'Not Scheduled';
-            $rowcolor = '#f22';
-            $election_date = '';
             $unit = $row->unit_type . " " . $row->unit_num;
-            if ($row->requests > 0) {
-                $status = 'Requested';
-                $rowcolor = '#f82';
-            }
-            if ((array_key_exists($row->chapter, $elecscheds)) &&
-                 (array_key_exists($unit, $elecscheds[$row->chapter]))) {
-                $status = 'Scheduled';
-                $rowcolor = '#0c7';
-                $election_date = $elecscheds[$row->chapter][$unit];
-            }
-            if (($status == 'Scheduled') && (strtotime($election_date) < time())) {
-                $status = 'Missing Paperwork';
-                $rowcolor = '#f0f';
-            }
-            if ($row->reports > 0) {
-                $status = 'Completed';
-                $rowcolor = 'cyan';
-                $election_date = $row->election_date;
-            }
-            echo '<tr style="background-color: ' . $rowcolor . '">';
-            echo "<td>" . htmlspecialchars($status) . "</td>";
-            #elseif ($rowcolor == 'orange') { echo '<td>Requested</td>'; }
-            #elseif ($rowcolor == 'purple') { echo '<td>Past Schedule</td>'; }
+            echo '<tr style="background-color: ' . $statuscolor[$data[$row->chapter][$unit]['status']] . '">';
+            echo "<td>" . htmlspecialchars($statusname[$data[$row->chapter][$unit]['status']]) . "</td>";
+            echo "<td>" . htmlspecialchars($data[$row->chapter][$unit]['num_reports']) . "</td>\n";
+            echo "<td>" . htmlspecialchars($row->district_name) . "</td>\n";
+            echo "<td>" . htmlspecialchars($unit) . "</td>\n";
+            echo "<td>" . htmlspecialchars($row->unit_city) . "</td>\n";
+            $election_date = $data[$row->chapter][$unit]['election_date'];
             if ($election_date) {
                 $election_date = date("Y-m-d",strtotime($election_date));
             }
-            $row->election_date = $election_date;
-            foreach (Array('reports','district_name','unit_type','unit_num','unit_city','election_date') as $item) {
-                echo "<td>" . htmlspecialchars($row->$item) . "</td>\n";
-            }
+            echo "<td>" . htmlspecialchars($election_date) . "</td>\n";
             echo "<td>" . htmlspecialchars($row->ul_full_name) . "<br>" . htmlspecialchars($row->ul_email) . "<br>" . htmlspecialchars($row->ul_phone_number) . "</td>\n";
             echo "<td>" . htmlspecialchars($row->cc_full_name) . "<br>" . htmlspecialchars($row->cc_email) . "<br>" . htmlspecialchars($row->cc_phone_number) . "</td>\n";
             echo "<td>" . htmlspecialchars($row->rep_full_name) . "<br>" . htmlspecialchars($row->rep_email) . "<br>" . htmlspecialchars($row->rep_phone_number) . "</td>\n";
