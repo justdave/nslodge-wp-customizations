@@ -1,11 +1,11 @@
 var $j = jQuery.noConflict();
 
 $j(document).ready(function(){
-  if (document.cookie.match('(^|;)?formData=([^;]*)(;|$)') == null) {
-    var url = window.location.href;
-    url = url.replace(/-complete/,'');
-    window.location.replace(url);
-  }
+  //if (document.cookie.match('(^|;)?formData=([^;]*)(;|$)') == null) {
+  //  var url = window.location.href;
+  //  url = url.replace(/-complete/,'');
+  //  window.location.replace(url);
+  //}
   var electedScouts = parseInt($j.parseJSON(
     document.cookie.match('(^|;)?electedScouts=([^;]*)(;|$)')[2]
   ));
