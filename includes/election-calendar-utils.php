@@ -27,15 +27,12 @@ function nslodge_ue_getelections($chapter) {
     $min_date = strtotime("2018-11-01");
     $calendar_id = [
         "all" => 1732,
-        1 => 1722,
-        2 => 1719,
-        3 => 1713,
-        4 => 1704,
-        5 => 1725,
-        6 => 1727,
-        7 => 1730
+        "a" => 1722,
+        "b" => 1719,
+        "c" => 1713,
+        "d" => 1704,
+        "e" => 1725,
     ];
-
 
     $calendar = simcal_get_calendar($calendar_id[$chapter]);
     $events = $calendar->get_events()->from($min_date);
@@ -52,11 +49,11 @@ function nslodge_ue_getelections($chapter) {
             preg_match("/([Tt]roop|[Cc]rew|[Ss]hip) (\d+)/",$title,$matches);
             $unit_type = $matches[1];
             $unit_num = $matches[2];
-            $troop = "$unit_type $unit_num";
+            $unit = "$unit_type $unit_num";
             if (!array_key_exists($this_chapter, $elecscheds)) {
                 $elecscheds[$this_chapter] = [];
             }
-            $elecscheds[$this_chapter][$troop] = date("m/d/Y",$start);
+            $elecscheds[$this_chapter][$unit] = date("m/d/Y",$start);
             $num += 1;
         }
     }
@@ -88,7 +85,8 @@ ORDER BY ReqDate, Priority", array("Chapter $chapter")));
     $schedreqs = [];
 
     foreach ($results as $row) {
-        $schedreqs[$row->Chapter][$row->UnitType][$row->UnitNum][$row->Priority] = $row->ReqDate;
+        $unit = $row->UnitType . " " . $row->UnitNum;
+        $schedreqs[$row->Chapter][$unit][$row->Priority] = $row->ReqDate;
     }
     return $schedreqs;
 }

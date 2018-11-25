@@ -52,7 +52,8 @@ function ns_election_widget() {
     }
     $results = $wpdb->get_results("
 SELECT
-    unit.chapter_num AS chapter,
+    unit.chapter_num AS chapternum,
+    chp.ChapterName AS chapter,
     unit.unit_type AS unit_type,
     unit.unit_num AS unit_num,
     COUNT(rpts.UnitNumber) AS num_reports,
@@ -69,10 +70,11 @@ ORDER BY unit.chapter_num, unit.unit_num
     $completed = [];
     $scheduled = [];
     $requested = [];
-    $num_troops = [];
+    $num_units = [];
     $data = [];
     $elecscheds = nslodge_ue_getelections('all');
     foreach ($results AS $row) {
+        $unit = $row->unit_type . " " . $row->unit_num;
         if (!array_key_exists($row->chapter, $completed)) {
             $completed[$row->chapter] = 0;
         }
@@ -82,34 +84,30 @@ ORDER BY unit.chapter_num, unit.unit_num
         if (!array_key_exists($row->chapter, $requested)) {
             $requested[$row->chapter] = 0;
         }
-        if (!array_key_exists($row->chapter, $num_troops)) {
-            $num_troops[$row->chapter] = 0;
+        if (!array_key_exists($row->chapter, $num_units)) {
+            $num_units[$row->chapter] = 0;
         }
         if (!array_key_exists($row->chapter, $data)) {
             $data[$row->chapter] = [];
         }
-        if (!array_key_exists($row->unit_type, $data[$row->chapter])) {
-            $data[$row->chapter][$row->unit_type] = [];
+        if (!array_key_exists($unit, $data[$row->chapter])) {
+            $data[$row->chapter][$unit] = [];
         }
-        if (!array_key_exists($row->unit_num, $data[$row->chapter][$row->unit_type])) {
-            $data[$row->chapter][$row->unit_type][$row->unit_num] = [];
-        }
-        $data[$row->chapter][$row->unit_type][$row->unit_num]['num_reports'] = $row->num_reports;
-        $data[$row->chapter][$row->unit_type][$row->unit_num]['num_reqs'] = $row->num_reqs;
-        $data[$row->chapter][$row->unit_type][$row->unit_num]['scheduled'] = 0;
+        $data[$row->chapter][$unit]['num_reports'] = $row->num_reports;
+        $data[$row->chapter][$unit]['num_reqs'] = $row->num_reqs;
+        $data[$row->chapter][$unit]['scheduled'] = 0;
         if ((array_key_exists($row->chapter, $elecscheds)) &&
-             (array_key_exists($row->unit_type, $elecscheds[$row->chapter])) &&
-             (array_key_exists($row->unit_num, $elecscheds[$row->chapter][$row->unit_type]))) {
-            $data[$row->chapter][$row->unit_type][$row->unit_num]['scheduled'] = 1;
+             (array_key_exists($unit, $elecscheds[$row->chapter])) ) {
+            $data[$row->chapter][$unit]['scheduled'] = 1;
         }
-        if ($data[$row->chapter][$row->unit_type][$row->unit_num]['num_reports'] > 0) {
+        if ($data[$row->chapter][$unit]['num_reports'] > 0) {
             $completed[$row->chapter] = $completed[$row->chapter] + 1;
-        } else if ($data[$row->chapter][$row->unit_type][$row->unit_num]['scheduled'] > 0) {
+        } else if ($data[$row->chapter][$unit]['scheduled'] > 0) {
             $scheduled[$row->chapter] = $scheduled[$row->chapter] + 1;
-        } else if ($data[$row->chapter][$row->unit_type][$row->unit_num]['num_reqs'] > 0) {
+        } else if ($data[$row->chapter][$unit]['num_reqs'] > 0) {
             $requested[$row->chapter] = $requested[$row->chapter] + 1;
         }
-        $num_troops[$row->chapter] = $num_troops[$row->chapter] + 1;
+        $num_units[$row->chapter] = $num_units[$row->chapter] + 1;
     }
 
     ?>
@@ -124,17 +122,17 @@ var ue_chartconfig = {
         {
             label: 'Complete',
             data: [<?php
-            $completed_troops = 0;
-            $total_troops = 0;
+            $completed_units = 0;
+            $total_units = 0;
             foreach (array_keys($completed) AS $key) {
-                if ($total_troops > 0) { echo ","; };
+                if ($total_units > 0) { echo ","; };
                 $this_completed = $completed[$key];
-                $this_total = $num_troops[$key];
-                echo htmlspecialchars(ceil(($completed[$key] / $num_troops[$key]) * 100));
-                $completed_troops = $completed_troops + $completed[$key];
-                $total_troops = $total_troops + $num_troops[$key];
+                $this_total = $num_units[$key];
+                echo htmlspecialchars(ceil(($completed[$key] / $num_units[$key]) * 100));
+                $completed_units = $completed_units + $completed[$key];
+                $total_units = $total_units + $num_units[$key];
             }
-            echo "," . htmlspecialchars(ceil(($completed_troops / $total_troops) * 100));
+            echo "," . htmlspecialchars(ceil(($completed_units / $total_units) * 100));
             ?>],
             backgroundColor: 'rgba(0, 224, 255, 0.2)',
             borderColor: 'rgba(0, 224, 255, 1)',
@@ -143,17 +141,17 @@ var ue_chartconfig = {
         {
             label: "Scheduled",
             data: [<?php
-            $scheduled_troops = 0;
-            $total_troops = 0;
+            $scheduled_units = 0;
+            $total_units = 0;
             foreach (array_keys($scheduled) AS $key) {
-                if ($total_troops > 0) { echo ","; };
+                if ($total_units > 0) { echo ","; };
                 $this_scheduled = $scheduled[$key];
-                $this_total = $num_troops[$key];
-                echo htmlspecialchars(ceil(($scheduled[$key] / $num_troops[$key]) * 100));
-                $scheduled_troops = $scheduled_troops + $scheduled[$key];
-                $total_troops = $total_troops + $num_troops[$key];
+                $this_total = $num_units[$key];
+                echo htmlspecialchars(ceil(($scheduled[$key] / $num_units[$key]) * 100));
+                $scheduled_units = $scheduled_units + $scheduled[$key];
+                $total_units = $total_units + $num_units[$key];
             }
-            echo "," . htmlspecialchars(ceil(($scheduled_troops / $total_troops) * 100));
+            echo "," . htmlspecialchars(ceil(($scheduled_units / $total_units) * 100));
             ?>],
             backgroundColor: 'rgba(0, 220, 0, 0.2)',
             borderColor: 'rgba(0, 220, 0, 1)',
@@ -162,17 +160,17 @@ var ue_chartconfig = {
         {
             label: "Requested",
             data: [<?php
-            $requested_troops = 0;
-            $total_troops = 0;
+            $requested_units = 0;
+            $total_units = 0;
             foreach (array_keys($requested) AS $key) {
-                if ($total_troops > 0) { echo ","; };
+                if ($total_units > 0) { echo ","; };
                 $this_requested = $requested[$key];
-                $this_total = $num_troops[$key];
-                echo htmlspecialchars(ceil(($requested[$key] / $num_troops[$key]) * 100));
-                $requested_troops = $requested_troops + $requested[$key];
-                $total_troops = $total_troops + $num_troops[$key];
+                $this_total = $num_units[$key];
+                echo htmlspecialchars(ceil(($requested[$key] / $num_units[$key]) * 100));
+                $requested_units = $requested_units + $requested[$key];
+                $total_units = $total_units + $num_units[$key];
             }
-            echo "," . htmlspecialchars(ceil(($requested_troops / $total_troops) * 100));
+            echo "," . htmlspecialchars(ceil(($requested_units / $total_units) * 100));
             ?>],
             backgroundColor: 'rgba(255, 105, 9, 0.2)',
             borderColor: 'rgba(255, 105, 9, 0.2)',
@@ -244,12 +242,12 @@ function nslodge_ue_dashboard_chapter() {
         $election_admin = 1;
     }
     ob_start();
-    $chapterletter = get_query_var('chapter');
-    $chaptername = $wpdb->get_var($wpdb->prepare("SELECT SelectorName FROM wp_oa_chapters WHERE ChapterName = %s", Array($chapterletter)));
-    $chapter = $wpdb->get_var($wpdb->prepare("SELECT chapter_num FROM wp_oa_chapters WHERE ChapterName = %s", Array($chapterletter)));
-    echo "<h2>Election information for Chapter " . htmlspecialchars($chapterletter) . " - " . htmlspecialchars($chaptername) . "</h2>\n";
+    $chapter = get_query_var('chapter');
+    $chaptername = $wpdb->get_var($wpdb->prepare("SELECT SelectorName FROM wp_oa_chapters WHERE ChapterName = %s", Array($chapter)));
+    $chapternum = $wpdb->get_var($wpdb->prepare("SELECT chapter_num FROM wp_oa_chapters WHERE ChapterName = %s", Array($chapter)));
+    echo "<h2>Election information for Chapter " . htmlspecialchars($chapter) . " - " . htmlspecialchars($chaptername) . "</h2>\n";
     if (!$election_committee) {
-        echo "<p>Please log in to an account with permission to view this data.</p>\n";
+        echo '<p>Please <a href="' . wp_login_url( get_permalink() ) . '">log in</a> to an account with permission to view this data.</p>' . "\n";
     } else {
         echo '<p><a href="/ue/dashboard">&larr; Back to Lodge view</a></p>';
         $results = $wpdb->get_results($wpdb->prepare("
@@ -258,6 +256,7 @@ SELECT
     COUNT(rpts.UnitNumber) AS reports,
     MAX(rpts.ElectionDate) AS election_date,
     COUNT(sched.UnitNum) AS requests,
+    ch.ChapterName AS chapter,
     district_name,
     unit_type,
     unit_num,
@@ -292,7 +291,7 @@ WHERE
 GROUP BY un.district_num, un.unit_type, un.unit_num
 ORDER BY un.unit_type, un.unit_num, un.district_num
     ",
-        Array($chapter)));
+        Array($chapternum)));
         $elecscheds = nslodge_ue_getelections($chapter);
         echo '<table class="wp_table oa_chapter_info">';
         echo "\n<tr><th>Status</th><th>Reports Filed</th><th>District</th><th colspan='2'>Unit</th><th>City</th><th>Election Date</th><th>Unit Leader</th><th>Committee Chair</th><th>OA Rep</th></tr>\n";
@@ -300,15 +299,16 @@ ORDER BY un.unit_type, un.unit_num, un.district_num
             $status = 'Not Scheduled';
             $rowcolor = '#f22';
             $election_date = '';
+            $unit = $row->unit_type . " " . $row->unit_num;
             if ($row->requests > 0) {
                 $status = 'Requested';
                 $rowcolor = '#f82';
             }
-            if ((array_key_exists($chapter, $elecscheds)) &&
-                 (array_key_exists($row->unit_num, $elecscheds[$chapter]))) {
+            if ((array_key_exists($row->chapter, $elecscheds)) &&
+                 (array_key_exists($unit, $elecscheds[$row->chapter]))) {
                 $status = 'Scheduled';
                 $rowcolor = '#0c7';
-                $election_date = $elecscheds[$chapter][$row->unit_num];
+                $election_date = $elecscheds[$row->chapter][$unit];
             }
             if (($status == 'Scheduled') && (strtotime($election_date) < time())) {
                 $status = 'Missing Paperwork';
@@ -362,7 +362,7 @@ function nslodge_ue_dashboard_list_chapters() {
     <li><a href="<?php echo htmlspecialchars($homeurl) ?>/ue/report">Submit an election report</a>
     <li><a href="<?php echo htmlspecialchars($homeurl) ?>/ue/adultnomination">Submit an Adult Nomination</a>
     <?php } ?>
-    <li><a href="<?php echo htmlspecialchars($homeurl) ?>/ue/request">Request an election for a troop</a>
+    <li><a href="<?php echo htmlspecialchars($homeurl) ?>/ue/request">Request an election for a unit</a>
     <li><a href="<?php echo htmlspecialchars($homeurl) ?>/ue/calendar">Lodge-wide Election Calendar</a>
     </ul>
     <?php if (!$election_committee) { ?>
