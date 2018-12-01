@@ -15,3 +15,7 @@ input, textarea {
     background: #fff;
     hyphens: none;
 }
+
+body, .entry-title, .easywp-nav-primary a {
+    font-family: sans-serif !important;
+}
