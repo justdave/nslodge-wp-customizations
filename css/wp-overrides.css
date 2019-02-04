@@ -16,6 +16,6 @@ input, textarea {
     hyphens: none;
 }
 
-body, .entry-title, .easywp-nav-primary a {
+body, h2, .entry-title, .easywp-nav-primary a {
     font-family: sans-serif !important;
 }
