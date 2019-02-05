@@ -46,9 +46,14 @@ add_action('wp_enqueue_scripts', 'ns_global_overrides');
 function ns_devsite_admin_theme_style() {
     wp_enqueue_style('nslodge-admin-theme', plugins_url('css/wp-admin.css', __FILE__));
 }
+function ns_devsite_main_theme_style() {
+    wp_enqueue_style('nslodge-main-theme', plugins_url('css/wp-devmain.css', __FILE__));
+}
+
 
 if (strpos(home_url(),"dev") !== false) {
     # if the code reaches here we're on the dev site. Load the admin css on the
     # admin pages so we can tell we're on the dev site.
     add_action('admin_enqueue_scripts', 'ns_devsite_admin_theme_style');
+    add_action('enqueue_scripts', 'ns_devsite_main_theme_style');
 }
