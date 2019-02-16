@@ -384,7 +384,7 @@ ORDER BY un.unit_type, un.unit_num, un.district_num
             "pastdue"      => "Missing Paperwork"
         ];
         $statuscolor = [
-            "notscheduled" => "#f22",
+            "notscheduled" => "#f77",
             "requested"    => "#f82",
             "completed"    => "cyan",
             "scheduled"    => "#0c7",
@@ -392,7 +392,7 @@ ORDER BY un.unit_type, un.unit_num, un.district_num
         ];
         foreach ($results as $row) {
             $unit = $row->unit_type . " " . $row->unit_num;
-            echo '<tr style="background-color: ' . $statuscolor[$data[$row->chapter][$unit]['status']] . '">';
+            echo '<tr style="color: black; background-color: ' . $statuscolor[$data[$row->chapter][$unit]['status']] . '">';
             echo "<td>" . htmlspecialchars($statusname[$data[$row->chapter][$unit]['status']]) . "</td>";
             echo "<td>" . htmlspecialchars($data[$row->chapter][$unit]['num_reports']) . "</td>\n";
             echo "<td>" . htmlspecialchars($row->district_name) . "</td>\n";
