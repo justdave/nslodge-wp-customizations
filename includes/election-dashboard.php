@@ -124,7 +124,7 @@ ORDER BY unit.chapter_num, unit.unit_type, unit.unit_num
             $data[$row->chapter][$unit]['status'] = 'completed';
             $data[$row->chapter][$unit]['election_date'] = $row->electiondate;
         } else if ($data[$row->chapter][$unit]['scheduled'] > 0) {
-            if (strtotime($data[$row->chapter][$unit]['election_date']) < time()) {
+            if (strtotime("+3 days",strtotime($data[$row->chapter][$unit]['election_date'])) < time()) {
                 $pastdue[$row->chapter] = $pastdue[$row->chapter] + 1;
                 $data[$row->chapter][$unit]['status'] = 'pastdue';
             } else {
