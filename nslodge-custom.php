@@ -30,7 +30,6 @@
 // All of the meat is in the includes directory, to keep it organized.
 // Just pull it all in from here.
 require_once("includes/election-calendar-utils.php");
-require_once("includes/issues-widget.php");
 require_once("includes/merge-candidates.php");
 require_once("includes/approve-adults.php");
 require_once("includes/election-dashboard.php");
