@@ -334,7 +334,7 @@ function nslodge_ue_dashboard_chapter() {
     $chapter = get_query_var('chapter');
     $chaptername = $wpdb->get_var($wpdb->prepare("SELECT SelectorName FROM wp_oa_chapters WHERE ChapterName = %s", Array($chapter)));
     $chapternum = $wpdb->get_var($wpdb->prepare("SELECT chapter_num FROM wp_oa_chapters WHERE ChapterName = %s", Array($chapter)));
-    echo "<h2>Election information for Chapter " . htmlspecialchars($chapter) . " - " . htmlspecialchars($chaptername) . "</h2>\n";
+    echo "<h2>Election information for Chapter " . strtoupper(htmlspecialchars($chapter)) . " - " . htmlspecialchars($chaptername) . "</h2>\n";
     if (!$election_committee) {
         echo '<p>Please <a href="' . wp_login_url( get_permalink() ) . '">log in</a> to an account with permission to view this data.</p>' . "\n";
     } else {
@@ -374,6 +374,7 @@ ORDER BY un.unit_type, un.unit_num, un.district_num
         Array($chapternum)));
         $elecdata = ns_get_electdata($chapter);
         $data = $elecdata['data'];
+        echo '<p>If you have corrections or additions for troop contact info, <a href="/unit-contact-info-update">submit it here</a>.</p>';
         echo '<table class="wp_table oa_chapter_info">';
         echo "\n<tr><th>Status</th><th>Reports Filed</th><th>District</th><th>Unit</th><th>City</th><th>Election Date</th><th>Unit Leader</th><th>Committee Chair</th><th>OA Rep</th></tr>\n";
         $statusname = [
