@@ -385,7 +385,7 @@ ORDER BY un.unit_type, un.unit_num, un.district_num
             "pastdue"      => "Missing Paperwork"
         ];
         $statuscolor = [
-            "notscheduled" => "#f03",
+            "notscheduled" => "#f47",
             "requested"    => "#f82",
             "completed"    => "cyan",
             "scheduled"    => "#0c7",
