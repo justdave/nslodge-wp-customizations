@@ -155,6 +155,58 @@ ORDER BY unit.chapter_num, unit.unit_type, unit.unit_num
     return $elecdata;
 }
 
+function ns_chapter_pie_chart( $chapter = "all" ) {
+    $elecdata = ns_get_electdata( $chapter );
+    $completed = $elecdata['completed'];
+    $scheduled = $elecdata['scheduled'];
+    $notscheduled = $elecdata['notscheduled'];
+    $pastdue = $elecdata['pastdue'];
+    $requested = $elecdata['requested'];
+    $num_units = $elecdata['num_units'];
+    $chapter = strtoupper($chapter);
+?>
+<canvas id="nsChapterPieAll" width="200" height="200"></canvas>
+<script type="text/javascript">
+    var $j = jQuery.noConflict();
+    var ctx = $j("#nsChapterPieAll");
+    var ue_chartconfig = {
+        type: 'pie',
+        data: {
+            datasets: [{
+                data: [
+                    <?php echo htmlspecialchars($completed[$chapter]) ?>,
+                    <?php echo htmlspecialchars($pastdue[$chapter]) ?>,
+                    <?php echo htmlspecialchars($scheduled[$chapter]) ?>,
+                    <?php echo htmlspecialchars($requested[$chapter]) ?>,
+                    <?php echo htmlspecialchars($notscheduled[$chapter]) ?>
+                ],
+                backgroundColor: [
+                    'cyan',
+                    '#f0f',
+                    '#0c7',
+                    '#f82',
+                    '#f47'
+                ]
+            }],
+            labels: [
+                'Completed',
+                'Missing Paperwork',
+                'Scheduled',
+                'Requested',
+                'Not Scheduled'
+            ]
+        },
+        options: {
+            legend: {
+                display: false
+            }
+        }
+    }
+    var ue_chart = new Chart(ctx, ue_chartconfig);
+</script>
+<?php
+}
+
 function ns_election_widget() {
     if (is_admin()) {
         ?><a href="/ue/dashboard">Go to Unit Elections Dashboard</a><br><?php
@@ -374,7 +426,19 @@ ORDER BY un.unit_type, un.unit_num, un.district_num
         Array($chapternum)));
         $elecdata = ns_get_electdata($chapter);
         $data = $elecdata['data'];
-        echo '<p>If you have corrections or additions for troop contact info, <a href="/unit-contact-info-update">submit it here</a>.</p>';
+        ?><div style="height: 200px; width: 200px; float: left;"><?php
+        ns_chapter_pie_chart($chapter);
+        ?></div>
+        <div style="float: left; margin: 5px;"><table id="elec_table">
+        <tr><th class="elec_notscheduled">Not Scheduled</th><td><?php echo htmlspecialchars($elecdata['notscheduled'][strtoupper($chapter)]); ?></td></tr>
+        <tr><th class="elec_requested">Requested</th><td><?php echo htmlspecialchars($elecdata['requested'][strtoupper($chapter)]); ?></td></tr>
+        <tr><th class="elec_scheduled">Scheduled</th><td><?php echo htmlspecialchars($elecdata['scheduled'][strtoupper($chapter)]); ?></td></tr>
+        <tr><th class="elec_pastdue">Missing Paperwork</th><td><?php echo htmlspecialchars($elecdata['pastdue'][strtoupper($chapter)]); ?></td></tr>
+        <tr><th class="elec_completed">Completed</th><td><?php echo htmlspecialchars($elecdata['completed'][strtoupper($chapter)]); ?></td></tr>
+        <tr><th>Total Units</th><td><?php echo htmlspecialchars($elecdata['num_units'][strtoupper($chapter)]); ?></td></tr>
+        </table>
+        </div><div style="clear: both;"></div><?php
+        echo '<p style="font-size: large;">If you have corrections or additions for troop contact info, <a href="/unit-contact-info-update">submit it here</a>.</p>';
         echo '<table class="wp_table oa_chapter_info">';
         echo "\n<tr><th>Status</th><th>Reports Filed</th><th>District</th><th>Unit</th><th>City</th><th>Election Date</th><th>Unit Leader</th><th>Committee Chair</th><th>OA Rep</th></tr>\n";
         $statusname = [
@@ -384,16 +448,9 @@ ORDER BY un.unit_type, un.unit_num, un.district_num
             "scheduled"    => "Scheduled",
             "pastdue"      => "Missing Paperwork"
         ];
-        $statuscolor = [
-            "notscheduled" => "#f47",
-            "requested"    => "#f82",
-            "completed"    => "cyan",
-            "scheduled"    => "#0c7",
-            "pastdue"      => "#f0f",
-        ];
         foreach ($results as $row) {
             $unit = $row->unit_type . " " . $row->unit_num;
-            echo '<tr style="color: black; background-color: ' . $statuscolor[$data[$row->chapter][$unit]['status']] . '">';
+            echo '<tr class="elec_' . $data[$row->chapter][$unit]['status'] . '" style="color: black;">';
             echo "<td>" . htmlspecialchars($statusname[$data[$row->chapter][$unit]['status']]) . "</td>";
             echo "<td>" . htmlspecialchars($data[$row->chapter][$unit]['num_reports']) . "</td>\n";
             echo "<td>" . htmlspecialchars($row->district_name) . "</td>\n";
