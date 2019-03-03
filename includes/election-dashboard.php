@@ -439,6 +439,7 @@ ORDER BY un.unit_type, un.unit_num, un.district_num
         </table>
         </div><div style="clear: both;"></div><?php
         echo '<p style="font-size: large;">If you have corrections or additions for troop contact info, <a href="/unit-contact-info-update">submit it here</a>.</p>';
+        echo '<div class="oa_chapter_info_wrapper">';
         echo '<table class="wp_table oa_chapter_info">';
         echo "\n<tr><th>Status</th><th>Reports Filed</th><th>District</th><th>Unit</th><th>City</th><th>Election Date</th><th>Unit Leader</th><th>Committee Chair</th><th>OA Rep</th></tr>\n";
         $statusname = [
@@ -466,7 +467,7 @@ ORDER BY un.unit_type, un.unit_num, un.district_num
             echo "<td>" . htmlspecialchars($row->rep_full_name) . "<br>" . htmlspecialchars($row->rep_email) . "<br>" . htmlspecialchars($row->rep_phone_number) . "</td>\n";
             echo "</tr>\n";
         }
-        echo "</table>\n";
+        echo "</table></div>\n";
     }
     return ob_get_clean();
 }

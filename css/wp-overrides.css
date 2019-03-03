@@ -1,6 +1,9 @@
 input, textarea {
   border: 1px solid rgba(0, 0, 0, 0.3)!important;
 }
+.oa_chapter_info_wrapper {
+    overflow-x: scroll;
+}
 .oa_chapter_info {
     border: 1px solid black;
 }
