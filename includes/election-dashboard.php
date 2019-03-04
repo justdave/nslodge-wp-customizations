@@ -166,6 +166,17 @@ function ns_chapter_pie_chart( $chapter = "all" ) {
     $chapter = strtoupper($chapter);
 ?>
 <canvas id="nsChapterPieAll" width="200" height="200"></canvas>
+<div style="display:none;">
+<!-- this hidden div is to ensure we have something on the page with these
+     classes so we can pull the colors out of them to use in the charts, and
+     then the colors can be changed in the CSS and they're consistent
+     everywhere we use them -->
+<div class="elec_completed"></div>
+<div class="elec_pastdue"></div>
+<div class="elec_scheduled"></div>
+<div class="elec_requested"></div>
+<div class="elec_notscheduled"></div>
+</div>
 <script type="text/javascript">
     var $j = jQuery.noConflict();
     var ctx = $j("#nsChapterPieAll");
@@ -181,11 +192,11 @@ function ns_chapter_pie_chart( $chapter = "all" ) {
                     <?php echo htmlspecialchars($notscheduled[$chapter]) ?>
                 ],
                 backgroundColor: [
-                    'cyan',
-                    '#f0f',
-                    '#0c7',
-                    '#f82',
-                    '#f47'
+                    $j(".elec_completed").css("background-color"),
+                    $j(".elec_pastdue").css("background-color"),
+                    $j(".elec_scheduled").css("background-color"),
+                    $j(".elec_requested").css("background-color"),
+                    $j(".elec_notscheduled").css("background-color")
                 ]
             }],
             labels: [
@@ -220,8 +231,25 @@ function ns_election_widget() {
     $num_units = $elecdata['num_units'];
     ?>
 <canvas id="nsElectionChart" width="200" height="100"></canvas>
+<div style="display:none;">
+<!-- this hidden div is to ensure we have something on the page with these
+     classes so we can pull the colors out of them to use in the charts, and
+     then the colors can be changed in the CSS and they're consistent
+     everywhere we use them -->
+<div class="elec_completed"></div>
+<div class="elec_pastdue"></div>
+<div class="elec_scheduled"></div>
+<div class="elec_requested"></div>
+<div class="elec_notscheduled"></div>
+</div>
 <script type="text/javascript">
-var ctx = document.getElementById("nsElectionChart");
+var $j = jQuery.noConflict();
+var ctx = $j("#nsElectionChart");
+function fixalpha(color, newalpha) {
+    var pat = /^rgba?\((\d+),\s*(\d+),\s*(\d+)/;
+    var m = pat.exec(color);
+    return "rgba(" + m[1] + ", " + m[2] + ", " + m[3] + ", " + newalpha + ")";
+}
 var ue_chartconfig = {
     type: 'horizontalBar',
     data: {
@@ -240,8 +268,8 @@ var ue_chartconfig = {
             }
             echo "," . htmlspecialchars(($completed_units / $total_units) * 100);
             ?>],
-            backgroundColor: 'rgba(0, 224, 255, 0.2)',
-            borderColor: 'rgba(0, 224, 255, 1)',
+            backgroundColor: fixalpha($j(".elec_completed").css("background-color"), 0.2),
+            borderColor: fixalpha($j(".elec_completed").css("background-color"), 1),
             borderWidth: 1
         },
         {
@@ -257,8 +285,8 @@ var ue_chartconfig = {
             }
             echo "," . htmlspecialchars(($pastdue_units / $total_units) * 100);
             ?>],
-            backgroundColor: 'rgba(255, 0, 255, 0.2)',
-            borderColor: 'rgba(255, 0, 255, 1)',
+            backgroundColor: fixalpha($j(".elec_pastdue").css("background-color"), 0.2),
+            borderColor: fixalpha($j(".elec_pastdue").css("background-color"), 1),
             borderWidth: 1
         },
         {
@@ -274,8 +302,8 @@ var ue_chartconfig = {
             }
             echo "," . htmlspecialchars(($scheduled_units / $total_units) * 100);
             ?>],
-            backgroundColor: 'rgba(0, 220, 0, 0.2)',
-            borderColor: 'rgba(0, 220, 0, 1)',
+            backgroundColor: fixalpha($j(".elec_scheduled").css("background-color"), 0.2),
+            borderColor: fixalpha($j(".elec_scheduled").css("background-color"), 1),
             borderWidth: 1
         },
         {
@@ -291,8 +319,8 @@ var ue_chartconfig = {
             }
             echo "," . htmlspecialchars(($requested_units / $total_units) * 100);
             ?>],
-            backgroundColor: 'rgba(255, 105, 9, 0.2)',
-            borderColor: 'rgba(255, 105, 9, 1)',
+            backgroundColor: fixalpha($j(".elec_requested").css("background-color"), 0.2),
+            borderColor: fixalpha($j(".elec_requested").css("background-color"), 1),
             borderWidth: 1
         },
         {
@@ -308,8 +336,8 @@ var ue_chartconfig = {
             }
             echo "," . htmlspecialchars(($notscheduled_units / $total_units) * 100);
             ?>],
-            backgroundColor: 'rgba(255, 0, 0, 0.2)',
-            borderColor: 'rgba(255, 0, 0, 1)',
+            backgroundColor: fixalpha($j(".elec_notscheduled").css("background-color"), 0.2),
+            borderColor: fixalpha($j(".elec_notscheduled").css("background-color"), 1),
             borderWidth: 1
         }
         ]
@@ -426,7 +454,8 @@ ORDER BY un.unit_type, un.unit_num, un.district_num
         Array($chapternum)));
         $elecdata = ns_get_electdata($chapter);
         $data = $elecdata['data'];
-        ?><div style="height: 200px; width: 200px; float: left;"><?php
+        ?>
+        <div style="height: 200px; width: 200px; float: left;"><?php
         ns_chapter_pie_chart($chapter);
         ?></div>
         <div style="float: left; margin: 5px;"><table id="elec_table">
@@ -437,7 +466,8 @@ ORDER BY un.unit_type, un.unit_num, un.district_num
         <tr><th class="elec_completed">Completed</th><td><?php echo htmlspecialchars($elecdata['completed'][strtoupper($chapter)]); ?></td></tr>
         <tr><th>Total Units</th><td><?php echo htmlspecialchars($elecdata['num_units'][strtoupper($chapter)]); ?></td></tr>
         </table>
-        </div><div style="clear: both;"></div><?php
+        </div>
+        <div style="clear: both;"></div><?php
         echo '<p style="font-size: large;">If you have corrections or additions for troop contact info, <a href="/unit-contact-info-update">submit it here</a>.</p>';
         echo '<div class="oa_chapter_info_wrapper">';
         echo '<table class="wp_table oa_chapter_info">';
