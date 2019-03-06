@@ -19,7 +19,8 @@ function ns_ue_ajax_enqueue_scripts() {
     '/ue/report-scoutentry' => [ 'pagejs' => 'js/report-scout.js' ],
     '/ue/report-complete'   => [ 'pagejs' => 'js/report-complete.js' ],
     '/ue/adultnomination'   => [ 'pagejs' => 'js/adult-nomination.js', 'unitwidget' => TRUE ],
-    '/ue/request'           => [ 'pagejs' => 'js/schedule-request.js', 'unitwidget' => TRUE ]
+    '/ue/request'           => [ 'pagejs' => 'js/unit-picker.js', 'unitwidget' => TRUE ],
+    '/unit-contact-info-update' => [ 'pagejs' => 'js/unit-picker.js', 'unitwidget' => TRUE ]
     );
     $pageuri = $_SERVER['REQUEST_URI'];
     if (array_key_exists($pageuri, $pagelist)) {
