@@ -35,6 +35,7 @@ require_once("includes/approve-adults.php");
 require_once("includes/election-dashboard.php");
 require_once("includes/ajax-calls.php");
 require_once("includes/ballot-generator-form.php");
+require_once("includes/management-options-page.php");
 
 function ns_global_overrides() {
     add_thickbox();
