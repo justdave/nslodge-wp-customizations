@@ -1,0 +1,15 @@
+.elec_notscheduled {
+    background-color: #f47;
+}
+.elec_requested {
+    background-color: #f82;
+}
+.elec_completed {
+    background-color: cyan;
+}
+.elec_scheduled {
+    background-color: #0c7;
+}
+.elec_pastdue {
+    background-color: #f0f;
+}

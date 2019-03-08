@@ -1,3 +1,4 @@
+@import url("chart-colors.css");
 input, textarea {
   border: 1px solid rgba(0, 0, 0, 0.3)!important;
 }
@@ -23,21 +24,6 @@ body, h2, .entry-title, .easywp-nav-primary a {
     font-family: sans-serif !important;
 }
 
-.elec_notscheduled {
-    background-color: #f47;
-}
-.elec_requested {
-    background-color: #f82;
-}
-.elec_completed {
-    background-color: cyan;
-}
-.elec_scheduled {
-    background-color: #0c7;
-}
-.elec_pastdue {
-    background-color: #f0f;
-}
 #elec_table {
     border-collapse: collapse;
 }
