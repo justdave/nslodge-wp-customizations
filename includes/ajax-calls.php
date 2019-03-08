@@ -21,6 +21,7 @@ function ns_ue_ajax_enqueue_scripts() {
     '/ue/adultnomination'   => [ 'pagejs' => 'js/adult-nomination.js', 'unitwidget' => TRUE ],
     '/ue/request'           => [ 'pagejs' => 'js/unit-picker.js', 'unitwidget' => TRUE ],
     '/unit-contact-info-update' => [ 'pagejs' => 'js/unit-picker.js', 'unitwidget' => TRUE ]
+    '/transfer'             => [ 'pagejs' => 'js/unit-picker.js', 'unitwidget' => TRUE ]
     );
     $pageuri = $_SERVER['REQUEST_URI'];
     if (array_key_exists($pageuri, $pagelist)) {
