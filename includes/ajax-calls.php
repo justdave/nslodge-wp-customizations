@@ -19,6 +19,7 @@ function ns_ue_ajax_enqueue_scripts() {
     '/ue/report-scoutentry' => [ 'pagejs' => 'js/report-scout.js' ],
     '/ue/report-complete'   => [ 'pagejs' => 'js/report-complete.js' ],
     '/ue/adultnomination'   => [ 'pagejs' => 'js/adult-nomination.js', 'unitwidget' => TRUE ],
+    '/ue/evaluation'        => [ 'pagejs' => 'js/unit-picker.js', 'unitwidget' => TRUE ],
     '/ue/request'           => [ 'pagejs' => 'js/unit-picker.js', 'unitwidget' => TRUE ],
     '/unit-contact-info-update' => [ 'pagejs' => 'js/unit-picker.js', 'unitwidget' => TRUE ],
     '/transfer'             => [ 'pagejs' => 'js/unit-picker.js', 'unitwidget' => TRUE ]
