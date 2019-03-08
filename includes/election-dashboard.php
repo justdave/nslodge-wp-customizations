@@ -523,7 +523,6 @@ function nslodge_ue_dashboard_list_chapters() {
     <?php if ($election_committee) { ?>
     <li><a href="<?php echo htmlspecialchars($homeurl) ?>/ue/report">Submit an election report</a>
     <li><a href="<?php echo htmlspecialchars($homeurl) ?>/ue/adultnomination">Submit an Adult Nomination</a>
-    <li><a href="<?php echo htmlspecialchars($homeurl) ?>/ue/evalresults">View Election Evaluations</a>
     <?php } ?>
     <li><a href="<?php echo htmlspecialchars($homeurl) ?>/ue/request">Request an election for a unit</a>
     <li><a href="<?php echo htmlspecialchars($homeurl) ?>/ue/calendar">Lodge-wide Election Calendar</a>
@@ -535,13 +534,16 @@ function nslodge_ue_dashboard_list_chapters() {
     <a href="<?php echo wp_login_url( get_permalink() ); ?>" title="Login">Login</a>
     to see more information.<br>
     <?php } ?>
-    <?php if ($election_admin) { ?>
+    <?php if (($election_admin) || ($election_committee)) { ?>
     <h5>Administrative UE Links</h5>
     <ul>
+    <li><a href="<?php echo htmlspecialchars($homeurl) ?>/ue/evalresults">View Election Evaluations</a>
+    <?php if ($election_admin) { ?>
     <li><a href="<?php echo htmlspecialchars($homeurl) ?>/ue/process-troops">Merge/Certify Election Results</a>
     <li><a href="<?php echo htmlspecialchars($homeurl) ?>/ue/process-adults">Process Adult Nominations</a>
     <li><a href="<?php echo htmlspecialchars($homeurl) ?>/ue/export-candidates">Export Youth Candidates to OALM</a>
     <li><a href="<?php echo htmlspecialchars($homeurl) ?>/ue/export-adults">Export Adult Candidates to OALM</a>
+    <?php } ?>
     </ul>
     <?php } ?>
     </div>
