@@ -523,6 +523,7 @@ function nslodge_ue_dashboard_list_chapters() {
     <?php if ($election_committee) { ?>
     <li><a href="<?php echo htmlspecialchars($homeurl) ?>/ue/report">Submit an election report</a>
     <li><a href="<?php echo htmlspecialchars($homeurl) ?>/ue/adultnomination">Submit an Adult Nomination</a>
+    <li><a href="<?php echo htmlspecialchars($homeurl) ?>/ue/evalresults">View Election Evaluations</a>
     <?php } ?>
     <li><a href="<?php echo htmlspecialchars($homeurl) ?>/ue/request">Request an election for a unit</a>
     <li><a href="<?php echo htmlspecialchars($homeurl) ?>/ue/calendar">Lodge-wide Election Calendar</a>
