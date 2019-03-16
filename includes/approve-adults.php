@@ -198,7 +198,7 @@ function ue_adult_submit(chapter, troop, bsaid) {
                 $scoutmaster_nominated = 1;
             }
         }
-        if ($scoutmaster_nominated && $elected) {
+        if ($scoutmaster_nominated && $allowed) {
             $allowed++;
             $allowed_style = ' style="background-color: lightgreen;"';
         }
