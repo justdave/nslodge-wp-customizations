@@ -20,6 +20,7 @@ $j(document).ready(function(){
   }).autocomplete("instance")._renderItem = function( ul, item ) {
     //alert(JSON.stringify(item))
     city = item.unit_city;
+    if (!city) { city = "" }
     if (city.length > 2) {
         city = ' - ' + city;
     }
