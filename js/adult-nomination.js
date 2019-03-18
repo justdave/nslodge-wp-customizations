@@ -6,7 +6,7 @@ $j(document).ready(function(){
   $j('#troopsearch').autocomplete({
     source: nslodge_ajax.ajaxurl + '?action=ns_get_troops_autocomplete',
     select: function( event, ui ) {
-        $j("#ChapterName").val(ui.item.SelectorName).change();
+        $j("#ChapterName").val(ui.item.chapter_name);
         $j("#UnitType").val(ui.item.unit_type);
         $j("#UnitNumber").val(ui.item.unit_num);
         $j("#ULName").val(ui.item.ul_full_name);
@@ -42,7 +42,6 @@ $j(document).ready(function(){
           $j('#district_search').val("");
           $j('#troop_picker').show();
           $j('#troop_picked').hide();
-          $j('#district_picked').hide();
           $j('input[name=UnitType]').val('Troop');
       }
       else if ($j('#recommendation').val() == 'District/Council Recommendation') {
@@ -51,7 +50,6 @@ $j(document).ready(function(){
           $j('#district_search').val("");
           $j('#troop_picker').hide();
           $j('#troop_picked').hide();
-          $j('#district_picked').hide();
       }
       else {
           $j('#unit_unpicked').show();
@@ -59,7 +57,6 @@ $j(document).ready(function(){
           $j('#district_search').val("");
           $j('#troop_picker').hide();
           $j('#troop_picked').hide();
-          $j('#district_picked').hide();
       }
   });
   $j('#district_search').change(function(){
@@ -68,21 +65,20 @@ $j(document).ready(function(){
       if (unitnum == 'PF') {
           unittype = 'Council';
           unitnum = '781';
-          $j('#ChapterName').val('PFFSC Staff').change();
+          $j('#ChapterName').val('PFFSC Staff');
       }
       else if (unitnum == 'MCC') {
           unittype = 'Council';
           unitnum = '780';
-          $j('#ChapterName').val('MCC Staff').change();
+          $j('#ChapterName').val('MCC Staff');
       }
       else {
           $j('#district_picked').show();
-          $j("#ChapterName option[value='']").attr('selected',true);
+          $j("#ChapterName").val('');
       }
       displaytext = $j('#district_search').find('option:selected').html() + ' - ' + unittype + ' ' + unitnum;
       $j('#UnitType').val(unittype);
-      $j('#UnitNumber').attr('value',unitnum);
-      // ^ this doesn't work with .val() for some reason, maybe because type="number"
+      $j('#UnitNumber').val(unitnum);
       $j('#troop_result').html(displaytext);
       $j('#district_picker').hide();
       $j('#troop_picker').hide();
