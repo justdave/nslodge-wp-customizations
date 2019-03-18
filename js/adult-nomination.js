@@ -42,7 +42,6 @@ $j(document).ready(function(){
           $j('#district_search').val("");
           $j('#troop_picker').show();
           $j('#troop_picked').hide();
-          $j('input[name=UnitType]').val('Troop');
       }
       else if ($j('#recommendation').val() == 'District/Council Recommendation') {
           $j('#unit_unpicked').hide();
@@ -58,6 +57,9 @@ $j(document).ready(function(){
           $j('#troop_picker').hide();
           $j('#troop_picked').hide();
       }
+      $j('input[name=ChapterName]').val("");
+      $j('input[name=UnitType]').val("");
+      $j('input[name=UnitNumber]').val("");
   });
   $j('#district_search').change(function(){
       unittype = 'District';
@@ -65,20 +67,21 @@ $j(document).ready(function(){
       if (unitnum == 'PF') {
           unittype = 'Council';
           unitnum = '781';
-          $j('#ChapterName').val('PFFSC Staff');
+          $j('input[name=ChapterName]').val('PFFSC Staff');
       }
       else if (unitnum == 'MCC') {
           unittype = 'Council';
           unitnum = '780';
-          $j('#ChapterName').val('MCC Staff');
+          $j('input[name=ChapterName]').val('MCC Staff');
       }
       else {
           $j('#district_picked').show();
-          $j("#ChapterName").val('');
+          $j("input[name=ChapterName]").val('ABCDE'.substring(unitnum-1,unitnum));
+         // $j("input[name=ChapterName]").val('');
       }
       displaytext = $j('#district_search').find('option:selected').html() + ' - ' + unittype + ' ' + unitnum;
-      $j('#UnitType').val(unittype);
-      $j('#UnitNumber').val(unitnum);
+      $j('input[name=UnitType]').val(unittype);
+      $j('input[name=UnitNumber]').val(unitnum);
       $j('#troop_result').html(displaytext);
       $j('#district_picker').hide();
       $j('#troop_picker').hide();
