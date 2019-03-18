@@ -6,9 +6,9 @@ $j(document).ready(function(){
   $j('#troopsearch').autocomplete({
     source: nslodge_ajax.ajaxurl + '?action=ns_get_troops_autocomplete',
     select: function( event, ui ) {
-        $j("#ChapterName").val(ui.item.chapter_name);
-        $j("#UnitType").val(ui.item.unit_type);
-        $j("#UnitNumber").val(ui.item.unit_num);
+        $j("input[name=ChapterName]").val(ui.item.chapter_name);
+        $j("input[name=UnitType]").val(ui.item.unit_type);
+        $j("input[name=UnitNumber]").val(ui.item.unit_num);
         $j("#ULName").val(ui.item.ul_full_name);
         $j("#CCName").val(ui.item.cc_full_name);
         $j('#troop_result').html(ui.item.label);
