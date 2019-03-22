@@ -149,7 +149,13 @@ $j(document).ready(function(){
       }
       else {
           $j('#district_picked').show();
-          $j("input[name=ChapterName]").val('ABCDE'.substring(unitnum-1,unitnum));
+          var districtmap = [];
+          districtmap[72] = 'A';
+          districtmap[71] = 'B';
+          districtmap[1] = 'C';
+          districtmap[4] = 'D';
+          districtmap[3] = 'E';
+          $j("input[name=ChapterName]").val(districtmap[unitnum]);
          // $j("input[name=ChapterName]").val('');
       }
       displaytext = $j('#district_search').find('option:selected').html() + ' - ' + unittype + ' ' + unitnum;
