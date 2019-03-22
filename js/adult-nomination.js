@@ -3,6 +3,23 @@ var $j = jQuery.noConflict();
 $j(document).ready(function(){
   $j('#troop_picked').hide();
   $j('#change_troop').click(change_troop);
+  $j('#nominate_leader').change( function() {
+      if (this.checked) {
+          $j('#adult_main_form').show();
+          $j('#adult_main_form').focus();
+          $j('input[name="FirstName"]').focus();
+          $j('input[type=radio][name=CurrentPosition][value="Assistant Scoutmaster"]').parent().parent().hide();
+          $j('input[type=radio][name=CurrentPosition][value="Associate Adviser"]').parent().parent().hide();
+          $j('input[type=radio][name=CurrentPosition][value="Mate"]').parent().parent().hide();
+          $j('input[type=radio][name=CurrentPosition][value="Committee Chairman"]').parent().parent().hide();
+          $j('input[type=radio][name=CurrentPosition][value="Secretary"]').parent().parent().hide();
+          $j('input[type=radio][name=CurrentPosition][value="Treasurer"]').parent().parent().hide();
+          $j('input[type=radio][name=CurrentPosition][value="Committee Member"]').parent().parent().hide();
+          $j('input[type=radio][name=CurrentPosition][value="Other (specify in comments)"]').parent().parent().hide();
+      } else {
+          $j('#adult_main_form').hide();
+      }
+  });
   $j('#troopsearch').autocomplete({
     source: nslodge_ajax.ajaxurl + '?action=ns_get_troops_autocomplete',
     select: function( event, ui ) {
@@ -15,6 +32,45 @@ $j(document).ready(function(){
         $j('#troop_picker').hide();
         $j('#troop_picked').show();
         $j('#troopsearch').val("");
+        $j('#adult_unit_loading').show();
+        $j.ajax({
+            url : nslodge_ajax.ajaxurl,
+            type : 'get',
+            data : {
+                action : 'ns_get_unit_candidate_meta',
+                chapter : ui.item.chapter_name,
+                unit_type : ui.item.unit_type,
+                unit_num : ui.item.unit_num
+            },
+            success : function( response ) {
+                num_allowed = 0;
+                if (response.num_candidates > 0) {
+                    num_allowed = Math.ceil(response.num_candidates / 3);
+                }
+                num_nominations = response.num_nominations - response.leader_nominated;
+                adults_remaining = num_allowed - num_nominations;
+                election_date = response.election_date;
+                if (null == election_date) { election_date = "No election report submitted" }
+                $j('#adult_unit_loading').hide();
+                $j('#adult_unit_info').show();
+                $j('#election_date').text(election_date);
+                $j('#youth_elected').text(response.num_candidates.toString());
+                $j('#adults_allowed').text(num_allowed.toString());
+                $j('#adults_nominated').text(num_nominations.toString());
+                $j('#adults_remaining').text(adults_remaining.toString());
+                if (response.num_candidates == 0) {
+                    $j('#report_submitted_no_youth').show();
+                } else if (adults_remaining > 0) {
+                    $j('#adult_main_form').show();
+                    $j('#adult_unit_info').focus();
+                    $j('input[name="FirstName"]').focus();
+                } else {
+                    $j('#exceeded_nominations').show();
+                    $j('#nominate_leader').prop('checked', false);
+                }
+            }
+
+        })
         return false;
     },
   }).autocomplete("instance")._renderItem = function( ul, item ) {
@@ -39,27 +95,36 @@ $j(document).ready(function(){
       if ($j('#recommendation').val() == 'Unit Recommendation') {
           $j('#unit_unpicked').hide();
           $j('#district_picker').hide();
-          $j('#district_search').val("");
           $j('#troop_picker').show();
-          $j('#troop_picked').hide();
       }
       else if ($j('#recommendation').val() == 'District/Council Recommendation') {
           $j('#unit_unpicked').hide();
           $j('#district_picker').show();
-          $j('#district_search').val("");
           $j('#troop_picker').hide();
-          $j('#troop_picked').hide();
       }
       else {
           $j('#unit_unpicked').show();
           $j('#district_picker').hide();
-          $j('#district_search').val("");
           $j('#troop_picker').hide();
-          $j('#troop_picked').hide();
       }
+      $j('#district_search').val("");
+      $j('#troop_picked').hide();
+      $j('#adult_main_form').hide();
+      $j('#adult_unit_loading').hide();
+      $j('#adult_unit_info').hide();
+      $j('#report_submitted_no_youth').hide();
+      $j('#exceeded_nominations').hide();
       $j('input[name=ChapterName]').val("");
       $j('input[name=UnitType]').val("");
       $j('input[name=UnitNumber]').val("");
+      $j('input[type=radio][name=CurrentPosition][value="Assistant Scoutmaster"]').parent().parent().show();
+      $j('input[type=radio][name=CurrentPosition][value="Associate Adviser"]').parent().parent().show();
+      $j('input[type=radio][name=CurrentPosition][value="Mate"]').parent().parent().show();
+      $j('input[type=radio][name=CurrentPosition][value="Committee Chairman"]').parent().parent().show();
+      $j('input[type=radio][name=CurrentPosition][value="Secretary"]').parent().parent().show();
+      $j('input[type=radio][name=CurrentPosition][value="Treasurer"]').parent().parent().show();
+      $j('input[type=radio][name=CurrentPosition][value="Committee Member"]').parent().parent().show();
+      $j('input[type=radio][name=CurrentPosition][value="Other (specify in comments)"]').parent().parent().show();
   });
   $j('#district_search').change(function(){
       unittype = 'District';
@@ -86,6 +151,9 @@ $j(document).ready(function(){
       $j('#district_picker').hide();
       $j('#troop_picker').hide();
       $j('#troop_picked').show();
+      $j('#adult_main_form').show();
+      $j('#adult_main_form').focus();
+      $j('input[name="FirstName"]').focus();
   });
 
 });

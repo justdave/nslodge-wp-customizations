@@ -63,3 +63,56 @@ function ns_get_troops_autocomplete() {
 
     die();// wordpress may print out a spurious zero without this - can be particularly bad if using json
 }
+
+add_action( 'wp_ajax_ns_get_unit_candidate_meta', 'ns_get_unit_candidate_meta' );
+add_action( 'wp_ajax_nopriv_ns_get_unit_candidate_meta', 'ns_get_unit_candidate_meta' ); // need this to serve non logged in users
+function ns_get_unit_candidate_meta() {
+    global $wpdb;
+    $chapter = $_GET['chapter'];
+    $unit_type = $_GET['unit_type'];
+    $unit_num = $_GET['unit_num'];
+    //$unit_desig = $_GET['unit_desig'];
+    $results = $wpdb->get_row($wpdb->prepare("
+        SELECT COUNT(DISTINCT(BSAMemberID)) AS num_candidates
+        FROM wp_oa_ue_candidates
+        WHERE ChapterName = %s
+          AND UnitType = %s
+          AND UnitNumber = %d
+    ", Array($chapter, $unit_type, $unit_num)));
+    $results2 = $wpdb->get_row($wpdb->prepare("
+        SELECT COUNT(DISTINCT(BSAMemberID)) AS num_nominations
+        FROM wp_oa_ue_adults
+        WHERE ChapterName = %s
+          AND UnitType = %s
+          AND UnitNumber = %d
+          AND recommendation = 'Unit Recommendation'
+    ", Array($chapter, $unit_type, $unit_num)));
+    $results3 = $wpdb->get_row($wpdb->prepare("
+        SELECT COUNT(1) AS leader_nominated
+        FROM wp_oa_ue_adults
+        WHERE ChapterName = %s
+          AND UnitType = %s
+          AND UnitNumber = %d
+          AND recommendation = 'Unit Recommendation'
+          AND CurrentPosition IN('Scoutmaster','Crew Adviser','Skipper')
+    ", Array($chapter, $unit_type, $unit_num)));
+    $results4 = $wpdb->get_row($wpdb->prepare("
+        SELECT MAX(ElectionDate) AS election_date
+        FROM wp_oa_ue_units
+        WHERE ChapterName = %s
+          AND UnitType = %s
+          AND UnitNumber = %d
+        ", Array($chapter, $unit_type, $unit_num)));
+    foreach ($results2 as $key => $value) {
+        $results->$key = $value;
+    }
+    foreach ($results3 as $key => $value) {
+        $results->$key = $value;
+    }
+    foreach ($results4 as $key => $value) {
+        $results->$key = $value;
+    }
+    wp_send_json($results);
+
+    die();// wordpress may print out a spurious zero without this - can be particularly bad if using json
+}
