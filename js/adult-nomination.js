@@ -8,16 +8,24 @@ $j(document).ready(function(){
           $j('#adult_main_form').show();
           $j('#adult_main_form').focus();
           $j('input[name="FirstName"]').focus();
-          $j('input[type=radio][name=CurrentPosition][value="Assistant Scoutmaster"]').parent().parent().hide();
-          $j('input[type=radio][name=CurrentPosition][value="Associate Adviser"]').parent().parent().hide();
-          $j('input[type=radio][name=CurrentPosition][value="Mate"]').parent().parent().hide();
-          $j('input[type=radio][name=CurrentPosition][value="Committee Chairman"]').parent().parent().hide();
-          $j('input[type=radio][name=CurrentPosition][value="Secretary"]').parent().parent().hide();
-          $j('input[type=radio][name=CurrentPosition][value="Treasurer"]').parent().parent().hide();
-          $j('input[type=radio][name=CurrentPosition][value="Committee Member"]').parent().parent().hide();
-          $j('input[type=radio][name=CurrentPosition][value="Other (specify in comments)"]').parent().parent().hide();
+          $j('input[name=CurrentPosition][value="Assistant Scoutmaster"]').parent().parent().hide();
+          $j('input[name=CurrentPosition][value="Associate Adviser"]').parent().parent().hide();
+          $j('input[name=CurrentPosition][value="Mate"]').parent().parent().hide();
+          $j('input[name=CurrentPosition][value="Committee Chairman"]').parent().parent().hide();
+          $j('input[name=CurrentPosition][value="Secretary"]').parent().parent().hide();
+          $j('input[name=CurrentPosition][value="Treasurer"]').parent().parent().hide();
+          $j('input[name=CurrentPosition][value="Committee Member"]').parent().parent().hide();
+          $j('input[name=CurrentPosition][value="Other (specify in comments)"]').parent().parent().hide();
       } else {
           $j('#adult_main_form').hide();
+      }
+  });
+  $j('input[name=CurrentPosition]').change( function() {
+      position = $j('input[name=CurrentPosition]:checked').val();
+      if (position == 'Scoutmaster' || position == 'Crew Adviser' || position == 'Skipper') {
+          $j('#unit_leader_chosen').show();
+      } else {
+          $j('#unit_leader_chosen').hide();
       }
   });
   $j('#troopsearch').autocomplete({
@@ -117,14 +125,14 @@ $j(document).ready(function(){
       $j('input[name=ChapterName]').val("");
       $j('input[name=UnitType]').val("");
       $j('input[name=UnitNumber]').val("");
-      $j('input[type=radio][name=CurrentPosition][value="Assistant Scoutmaster"]').parent().parent().show();
-      $j('input[type=radio][name=CurrentPosition][value="Associate Adviser"]').parent().parent().show();
-      $j('input[type=radio][name=CurrentPosition][value="Mate"]').parent().parent().show();
-      $j('input[type=radio][name=CurrentPosition][value="Committee Chairman"]').parent().parent().show();
-      $j('input[type=radio][name=CurrentPosition][value="Secretary"]').parent().parent().show();
-      $j('input[type=radio][name=CurrentPosition][value="Treasurer"]').parent().parent().show();
-      $j('input[type=radio][name=CurrentPosition][value="Committee Member"]').parent().parent().show();
-      $j('input[type=radio][name=CurrentPosition][value="Other (specify in comments)"]').parent().parent().show();
+      $j('input[name=CurrentPosition][value="Assistant Scoutmaster"]').parent().parent().show();
+      $j('input[name=CurrentPosition][value="Associate Adviser"]').parent().parent().show();
+      $j('input[name=CurrentPosition][value="Mate"]').parent().parent().show();
+      $j('input[name=CurrentPosition][value="Committee Chairman"]').parent().parent().show();
+      $j('input[name=CurrentPosition][value="Secretary"]').parent().parent().show();
+      $j('input[name=CurrentPosition][value="Treasurer"]').parent().parent().show();
+      $j('input[name=CurrentPosition][value="Committee Member"]').parent().parent().show();
+      $j('input[name=CurrentPosition][value="Other (specify in comments)"]').parent().parent().show();
   });
   $j('#district_search').change(function(){
       unittype = 'District';
