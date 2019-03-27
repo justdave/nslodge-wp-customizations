@@ -134,7 +134,9 @@ function nscustom_options()
                         if ($columnName === "Chapter") {
                             # the data will have a name, we need the foreign key reference ID
                             $chapter_name = $cell->getValue();
-                            if ($chapter_name == "C-West" || $chapter_name == "C-East") { $chapter_name = "C"; }
+                            if (strpos($chapter_name, "-") !== false) {
+                                $chapter_name = substr($chapter_name,0,1);
+                            }
                             $chapter_row = $chapters[$chapter_name];
                             $value = $chapter_row->chapter_num;
                         } elseif ($columnName === "District") {
