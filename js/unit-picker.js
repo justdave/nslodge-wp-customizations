@@ -7,6 +7,7 @@ $j(document).ready(function(){
     source: nslodge_ajax.ajaxurl + '?action=ns_get_troops_autocomplete',
     select: function( event, ui ) {
         $j("input[name=ChapterName]").val(ui.item.chapter_name);
+        $j("select[name=chapter-selector]").val(ui.item.chapter_name);
         $j("input[name=UnitType]").val(ui.item.unit_type);
         $j("input[name=UnitNumber]").val(ui.item.unit_num);
         $j('#troop_result').html(ui.item.label);
