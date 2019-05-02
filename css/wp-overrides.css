@@ -35,3 +35,19 @@ body, h2, .entry-title, .easywp-nav-primary a {
     text-align: right;
     width: 4em;
 }
+.horiz_scroll {
+    overflow-x: scroll;
+}
+.oa_unit_table table {
+    border: 1px solid black !important;
+}
+.oa_unit_table table tr th {
+    border: 1px solid black !important;
+}
+.oa_unit_table table tr td {
+    border: 1px solid black !important;
+}
+.oa_ue_button {
+    background-color: #333333;
+    color: white;
+}
