@@ -85,57 +85,62 @@ function nslodge_ue_list_nominations() {
         'submitter-email',
         'submitter-phone'
     ]; 
-    $troops = [];
+    $units = [];
 
-    $results = $wpdb->get_results("SELECT `ChapterName`, `UnitNumber`, COUNT(*) AS NumElected FROM wp_oa_ue_candidates_merged GROUP BY `ChapterName`, `UnitNumber` ORDER BY `ChapterName`, `UnitNumber`");
+    $results = $wpdb->get_results("SELECT `ChapterName`, `UnitType`, `UnitNumber`, COUNT(*) AS NumElected FROM wp_oa_ue_candidates_merged GROUP BY `ChapterName`, `UnitType`, `UnitNumber` ORDER BY `ChapterName`, `UnitType`, `UnitNumber`");
     foreach ($results as $row) {
-        $unit_token = get_unit_token($row->ChapterName, $row->UnitNumber);
-        $troops[$unit_token]['chapter'] = $row->ChapterName;
-        $troops[$unit_token]['troop'] = $row->UnitNumber;
-        $troops[$unit_token]['youth_elected'] = $row->NumElected;
-        $troops[$unit_token]['nominations'] = [];
+        $unit_token = get_unit_token($row->ChapterName, $row->UnitType, $row->UnitNumber);
+        $units[$unit_token]['chapter'] = $row->ChapterName;
+        $units[$unit_token]['unittype'] = $row->UnitType;
+        $units[$unit_token]['unitnum'] = $row->UnitNumber;
+        $units[$unit_token]['youth_elected'] = $row->NumElected;
+        $units[$unit_token]['nominations'] = [];
     }
-    $results = $wpdb->get_results("SELECT `ChapterName`, `UnitNumber`, COUNT(*) AS ReportsSubmitted, MAX(NumberElected) AS NumElected FROM wp_oa_ue_troops GROUP BY `ChapterName` , `UnitNumber` ORDER BY `ChapterName` , `UnitNumber`");
+    $results = $wpdb->get_results("SELECT `ChapterName`, `UnitType`, `UnitNumber`, COUNT(*) AS ReportsSubmitted, MAX(NumberElected) AS NumElected FROM wp_oa_ue_units GROUP BY `ChapterName`, `UnitType`, `UnitNumber` ORDER BY `ChapterName`, `UnitType`, `UnitNumber`");
     foreach ($results as $row) {
-        $unit_token = get_unit_token($row->ChapterName, $row->UnitNumber);
-        if (!isset($troops[$unit_token])) {
-            $troops[$unit_token]['chapter'] = $row->ChapterName;
-            $troops[$unit_token]['troop'] = $row->UnitNumber;
-            $troops[$unit_token]['youth_elected'] = 0;
-            $troops[$unit_token]['nominations'] = [];
+        $unit_token = get_unit_token($row->ChapterName, $row->UnitType, $row->UnitNumber);
+        if (!isset($units[$unit_token])) {
+            $units[$unit_token]['chapter'] = $row->ChapterName;
+            $units[$unit_token]['unittype'] = $row->UnitType;
+            $units[$unit_token]['unitnum'] = $row->UnitNumber;
+            $units[$unit_token]['youth_elected'] = 0;
+            $units[$unit_token]['nominations'] = [];
             if ($row->NumElected > 0) {
-                $troops[$unit_token]['report_pending'] = 1;
+                $units[$unit_token]['report_pending'] = 1;
             }
         }
     }
 
     $results = $wpdb->get_results("SELECT `" . join ("`, `",$nomination_columns) . "` FROM wp_oa_ue_adults WHERE `recommendation` LIKE 'Unit%'");
     foreach ($results as $row) {
-        $unit_token = get_unit_token($row->ChapterName, $row->UnitNumber);
-        if (!isset($troops[$unit_token])) {
-            $troops[$unit_token]['chapter'] = $row->ChapterName;
-            $troops[$unit_token]['troop'] = $row->UnitNumber;
-            $troops[$unit_token]['youth_elected'] = 0;
-            $troops[$unit_token]['no_report_filed'] = 1;
+        $unit_token = get_unit_token($row->ChapterName, $row->UnitType, $row->UnitNumber);
+        if (!isset($units[$unit_token])) {
+            $units[$unit_token]['chapter'] = $row->ChapterName;
+            $units[$unit_token]['unittype'] = $row->UnitType;
+            $units[$unit_token]['unitnum'] = $row->UnitNumber;
+            $units[$unit_token]['youth_elected'] = 0;
+            $units[$unit_token]['no_report_filed'] = 1;
         }
-        if (isset($troops[$unit_token]['nominations'][$row->BSAMemberID])) {
-            $troops[$unit_token]['warnings'][] = "multiple nominations for same BSAID";
+        if (isset($units[$unit_token]['nominations'][$row->BSAMemberID])) {
+            $units[$unit_token]['warnings'][] = "multiple nominations for same BSAID";
         }
-        $troops[$unit_token]['nominations'][$row->BSAMemberID] = $row;
+        $units[$unit_token]['nominations'][$row->BSAMemberID] = $row;
     }
     $output = '
 <div style="display:none;">
 <form id="ue_adult_form" method="post">
 <input type="hidden" name="ue_adult_action" value="view_nomination">
 <input type="hidden" id="ue_adult_chapter" name="ue_adult_chapter" value="">
-<input type="hidden" id="ue_adult_troop" name="ue_adult_troop" value="">
+<input type="hidden" id="ue_adult_unittype" name="ue_adult_unittype" value="">
+<input type="hidden" id="ue_adult_unitnum" name="ue_adult_unitnum" value="">
 <input type="hidden" id="ue_adult_bsaid" name="ue_adult_bsaid" value="">
 </form>
 </div>
 <script type="text/javascript"><!--
-function ue_adult_submit(chapter, troop, bsaid) {
+function ue_adult_submit(chapter, unittype, unitnum, bsaid) {
   document.getElementById("ue_adult_chapter").value = chapter;
-  document.getElementById("ue_adult_troop").value = troop;
+  document.getElementById("ue_adult_unittype").value = unittype;
+  document.getElementById("ue_adult_unitnum").value = unitnum;
   document.getElementById("ue_adult_bsaid").value = bsaid;
   document.getElementById("ue_adult_form").submit();
   return false;
@@ -149,7 +154,7 @@ function ue_adult_submit(chapter, troop, bsaid) {
 .adult_outside tr th {
     border: 2px solid black;
 }
-.adult_outside tr.troop td {
+.adult_outside tr.oa_unit td {
     border-top: 3px solid black;
     border-left: 1px solid black;
     border-right: 1px solid black;
@@ -177,23 +182,23 @@ function ue_adult_submit(chapter, troop, bsaid) {
 --></style>
 <h2>Adult Nominations:</h2>
 ';
-    $output .= '<table class="adult_outside"><tr><th>Chapter</th><th>Troop</th><th>Youth<br>Elected</th><th>Adults<br>Allowed<br><span style="font-size: xx-small;">green = adjusted<br>for scoutmaster</span></th><th>Nominations<br>Submitted<br><span style="font-size: xx-small;">red = too many<br>submitted<br>green = still<br>allowed more</span></th></tr>' . "\n";
-    ksort($troops);
-    foreach ($troops as $troop) {
+    $output .= '<table class="adult_outside"><tr><th>Chapter</th><th>Unit</th><th>Youth<br>Elected</th><th>Adults<br>Allowed<br><span style="font-size: xx-small;">green = adjusted<br>for scoutmaster</span></th><th>Nominations<br>Submitted<br><span style="font-size: xx-small;">red = too many<br>submitted<br>green = still<br>allowed more</span></th></tr>' . "\n";
+    ksort($units);
+    foreach ($units as $unit) {
         $style = "";
-        $elected = $troop['youth_elected'];
-        if ((0 == $elected) && (isset($troop['report_pending']))) {
+        $elected = $unit['youth_elected'];
+        if ((0 == $elected) && (isset($unit['report_pending']))) {
             $elected = "(report pending)";
         }
-        if ((0 == $elected) && (isset($troop['no_report_filed']))) {
+        if ((0 == $elected) && (isset($unit['no_report_filed']))) {
             $elected = "(no report filed)";
         }
         $allowed = ceil($elected/3);
-        $nominations = count($troop['nominations']);
+        $nominations = count($unit['nominations']);
         $nomination_style = "";
         $allowed_style = "";
         $scoutmaster_nominated = 0;
-        foreach ($troop['nominations'] as $nomination) {
+        foreach ($unit['nominations'] as $nomination) {
             if ($nomination->CurrentPosition == "Scoutmaster") {
                 $scoutmaster_nominated = 1;
             }
@@ -208,14 +213,14 @@ function ue_adult_submit(chapter, troop, bsaid) {
         if ($nominations < $allowed) {
             $nomination_style = ' style="background-color: lightgreen;"';
         }
-        $output .= sprintf('<tr class="troop"><td>%s</td><td>%s</td><td>%s</td><td' . $allowed_style .'>%s</td><td' . $nomination_style . '>%s</td></tr>' . "\n",
-            esc_html($troop['chapter']), esc_html($troop['troop']), esc_html($elected), esc_html($allowed), esc_html($nominations));
+        $output .= sprintf('<tr class="oa_unit"><td>%s</td><td>%s</td><td>%s</td><td' . $allowed_style .'>%s</td><td' . $nomination_style . '>%s</td></tr>' . "\n",
+            esc_html($unit['chapter']), esc_html($unit['unittype'] . ' ' . $unit['unitnum']), esc_html($elected), esc_html($allowed), esc_html($nominations));
         $output .= '<tr class="nominations"><td colspan="5"><table class="adult_inside">';
-        foreach ($troop['nominations'] as $nomination) {
+        foreach ($unit['nominations'] as $nomination) {
             $name = sprintf("%s %s %s %s", $nomination->FirstName, $nomination->MiddleName, $nomination->LastName, $nomination->Suffix);
             $name = ltrim(rtrim(str_replace("  ", " ", $name)));
-            $jsclick = '<a href="#" onClick="ue_adult_submit(' . "'%s','%s', '%s'" . '); return false;">View</a>';
-            $link = sprintf($jsclick, esc_html($troop['chapter']), esc_html($troop['troop']), esc_html($nomination->BSAMemberID));
+            $jsclick = '<a href="#" onClick="ue_adult_submit(' . "'%s','%s','%s', '%s'" . '); return false;">View</a>';
+            $link = sprintf($jsclick, esc_html($unit['chapter']), esc_html($unit['unittype']), esc_html($unit['unitnum']), esc_html($nomination->BSAMemberID));
             $approved = $wpdb->get_var($wpdb->prepare("SELECT Approved FROM wp_oa_ue_adult_nominations WHERE BSAMemberId = %s", $nomination->BSAMemberID));
             $status = '<span style="color: #b80;">Pending</span>';
             if (isset($approved)) {
@@ -231,7 +236,7 @@ function ue_adult_submit(chapter, troop, bsaid) {
         $output .= '</table></td></tr>';
     }
     $output .= "</table>\n";
-    #$output .= "<pre>" . esc_html(var_dump_ret($troops)) . "</pre>";
+    #$output .= "<pre>" . esc_html(var_dump_ret($units)) . "</pre>";
     $distresults = $wpdb->get_results("SELECT `" . join ("`, `",$nomination_columns) . "` FROM wp_oa_ue_adults WHERE `recommendation` LIKE 'District%'");
     $output .= '<table class="adult_outside"><tr><th>District/Council Recommendations</th></tr>' . "\n";
     $distreqs = [];
@@ -242,8 +247,8 @@ function ue_adult_submit(chapter, troop, bsaid) {
     foreach ($distreqs as $nomination) {
         $name = sprintf("%s %s %s %s", $nomination->FirstName, $nomination->MiddleName, $nomination->LastName, $nomination->Suffix);
         $name = ltrim(rtrim(str_replace("  ", " ", $name)));
-        $jsclick = '<a href="#" onClick="ue_adult_submit(' . "'%s','%s', '%s'" . '); return false;">View</a>';
-        $link = sprintf($jsclick, esc_html($nomination->ChapterName), esc_html($nomination->UnitNumber), esc_html($nomination->BSAMemberID));
+        $jsclick = '<a href="#" onClick="ue_adult_submit(' . "'%s','%s','%s', '%s'" . '); return false;">View</a>';
+        $link = sprintf($jsclick, esc_html($nomination->ChapterName), esc_html($nomination->UnitType), esc_html($nomination->UnitNumber), esc_html($nomination->BSAMemberID));
         $approved = $wpdb->get_var($wpdb->prepare("SELECT Approved FROM wp_oa_ue_adult_nominations WHERE BSAMemberId = %s", $nomination->BSAMemberID));
         $status = '<span style="color: #b80;">Pending</span>';
         if (isset($approved)) {
@@ -264,14 +269,15 @@ function ue_adult_submit(chapter, troop, bsaid) {
 function nslodge_ue_view_nomination() {
     global $wpdb, $post;
     $permalink = get_permalink($post->ID);
-    if (!isset($_POST['ue_adult_chapter']) or !isset($_POST['ue_adult_troop'])) {
+    if (!isset($_POST['ue_adult_chapter']) or !isset($_POST['ue_adult_unittype']) or !isset($_POST['ue_adult_unitnum'])) {
         return "<h4>Error: no unit specified</h4>\n";
     }
     if (!isset($_POST['ue_adult_bsaid'])) {
         return "<h4>Error: no member ID specified</h4>\n";
     }
     $chapter = $_POST['ue_adult_chapter'];
-    $troop = $_POST['ue_adult_troop'];
+    $unittype = $_POST['ue_adult_unittype'];
+    $unitnum = $_POST['ue_adult_unitnum'];
     $bsaid = $_POST['ue_adult_bsaid'];
     $nomination_columns = [
         'Submitted',
@@ -327,25 +333,26 @@ function nslodge_ue_view_nomination() {
     text-align: left;
 }
 #ue_approve {
-    border: 2px solid green;
+    background-color: green;
     margin: 10px;
 }
 #ue_reject {
-    border: 2px solid red;
+    background-color: red;
     margin: 10px;
 }
 #ue_pending {
-    border: 2px solid #eb2;
+    background-color: #eb2;
     margin: 10px;
 }
 --></style>
 <form id="ue_adult_form" method="post">
 <input type="hidden" name="ue_adult_action" value="adult_approval">
 <input type="hidden" id="ue_adult_chapter" name="ue_adult_chapter" value="' . esc_html($chapter) . '">
-<input type="hidden" id="ue_adult_troop" name="ue_adult_troop" value="' . esc_html($troop) . '">
+<input type="hidden" id="ue_adult_unittype" name="ue_adult_unittype" value="' . esc_html($unittype) . '">
+<input type="hidden" id="ue_adult_unitnum" name="ue_adult_unitnum" value="' . esc_html($unitnum) . '">
 <input type="hidden" id="ue_adult_bsaid" name="ue_adult_bsaid" value="' . esc_html($bsaid) . '">
 ';
-    $nomination = $wpdb->get_row($wpdb->prepare("SELECT `" . join ("`, `",$nomination_columns) . "` FROM wp_oa_ue_adults WHERE ChapterName = %s AND CAST(UnitNumber AS UNSIGNED) = %s AND BSAMemberID = %s", $chapter, $troop, $bsaid));
+    $nomination = $wpdb->get_row($wpdb->prepare("SELECT `" . join ("`, `",$nomination_columns) . "` FROM wp_oa_ue_adults WHERE ChapterName = %s AND UnitType = %s AND CAST(UnitNumber AS UNSIGNED) = %s AND BSAMemberID = %s", $chapter, $unittype, $unitnum, $bsaid));
     $output .= '<table class="nomination_form">' . "\n";
     foreach ($nomination_columns as $column) {
         $output .= "<tr><th>" . esc_html($column) . "</th><td>" . esc_html($nomination->$column) . "</td></tr>\n";
@@ -361,7 +368,7 @@ function nslodge_ue_view_nomination() {
 
 function nslodge_ue_adult_approval() {
     global $wpdb, $post;
-    if (!isset($_POST['ue_adult_chapter']) or !isset($_POST['ue_adult_troop'])) {
+    if (!isset($_POST['ue_adult_chapter']) or !isset($_POST['ue_adult_unittype']) or !isset($_POST['ue_adult_unitnum'])) {
         return "<h4>Error: no unit specified</h4>\n";
     }
     if (!isset($_POST['ue_adult_bsaid'])) {
@@ -371,7 +378,8 @@ function nslodge_ue_adult_approval() {
         return "<h4>Error: no action specified</h4>\n";
     }
     $chapter = $_POST['ue_adult_chapter'];
-    $troop = $_POST['ue_adult_troop'];
+    $unittype = $_POST['ue_adult_unittype'];
+    $unitnum = $_POST['ue_adult_unitnum'];
     $bsaid = $_POST['ue_adult_bsaid'];
     $action = $_POST['submit'];
     $nomination_columns = [
@@ -398,7 +406,7 @@ function nslodge_ue_adult_approval() {
     if ($action == "Set to Pending") {
         $error = $wpdb->delete("wp_oa_ue_adult_nominations", ["BSAMemberID" => $bsaid]);
     } else {
-        $nomination = $wpdb->get_row($wpdb->prepare("SELECT `" . join ("`, `",$nomination_columns) . "` FROM wp_oa_ue_adults WHERE ChapterName = %s AND UnitNumber = %s AND BSAMemberID = %s", $chapter, $troop, $bsaid));
+        $nomination = $wpdb->get_row($wpdb->prepare("SELECT `" . join ("`, `",$nomination_columns) . "` FROM wp_oa_ue_adults WHERE ChapterName = %s AND UnitType = %s AND UnitNumber = %s AND BSAMemberID = %s", $chapter, $unittype, $unitnum, $bsaid));
         $approved = 0;
         if ($action == "Set to Approved") {
             $approved = 1;
@@ -409,14 +417,14 @@ function nslodge_ue_adult_approval() {
     }
     $permalink = get_permalink($post->ID);
     header("Location: $permalink", true);
-    $output .= '<a href="' . esc_url($permalink) . '">Back to troop list</a></p>';
+    $output .= '<a href="' . esc_url($permalink) . '">Back to unit list</a></p>';
     return $output;
 }
 
 function nslodge_ue_list_unexported_adults() {
     global $wpdb;
     $output = "<h4>Adults available to export:</h4>\n";
-    $result = $wpdb->get_results("SELECT BSAMemberID, ChapterName, UnitNumber, FirstName, MiddleName, LastName, Suffix, RowExported FROM wp_oa_ue_adult_nominations WHERE Approved = 1 ORDER BY ChapterName, UnitNumber");
+    $result = $wpdb->get_results("SELECT BSAMemberID, ChapterName, UnitType, UnitNumber, FirstName, MiddleName, LastName, Suffix, RowExported FROM wp_oa_ue_adult_nominations WHERE Approved = 1 ORDER BY ChapterName, UnitType, UnitNumber");
     if (!isset($result)) {
         $output .= "<p>Nothing available to export</p>\n";
         return $output;
@@ -445,11 +453,11 @@ function ue_select_all(reallyall) {
 --></script>
 <form id="ue_merge_form" method="post">
 <input type="hidden" name="ue_export_action" value="export_candidates">
-<button onclick="ue_select_all(0); return false;">Select all unexported</button>
-<button onclick="ue_select_all(1); return false;">Select ALL</button>
+<button class="oa_ue_button" onclick="ue_select_all(0); return false;">Select all unexported</button>
+<button class="oa_ue_button" onclick="ue_select_all(1); return false;">Select ALL</button>
 ';
     $output .= '<table border="1">' . "\n";
-    $output .= "<tr><th>Select<br>Adult</th><th>Already<br>Exported</th><th>Chapter Name</th><th>Unit<br>Number</th><th>CandidateName</th></tr>\n";
+    $output .= "<tr><th>Select<br>Adult</th><th>Already<br>Exported</th><th>Chapter Name</th><th>Unit</th><th>CandidateName</th></tr>\n";
     foreach ($result as $row) {
         $name = sprintf("%s %s %s %s", $row->FirstName, $row->MiddleName, $row->LastName, $row->Suffix);
         $name = ltrim(rtrim(str_replace("  ", " ", $name)));
@@ -459,7 +467,7 @@ function ue_select_all(reallyall) {
             $selected = ' checked="checked"';
         }
         $output .= '<td style="text-align: center;"><input type="checkbox" disabled="disabled" id="exported-' . esc_html($row->BSAMemberID) . '" name="exported-' . esc_html($row->BSAMemberID) .  '"' . $selected . '></td>';
-        $output .= '<td>' . esc_html($row->ChapterName) . '</td><td style="text-align: right;">' . esc_html($row->UnitNumber) . '</td><td style="text-align: center;">' . esc_html($name) . '</td>';
+        $output .= '<td>' . esc_html($row->ChapterName) . '</td><td style="text-align: right;">' . esc_html($row->UnitType . ' ' . $row->UnitNumber) . '</td><td style="text-align: center;">' . esc_html($name) . '</td>';
         $output .= "</tr>\n";
     }
     $output .= "</table>\n";
@@ -576,6 +584,6 @@ function nslodge_ue_do_clear_adult_exports() {
     return $output;
 }
 
-function get_unit_token($chapter, $troop) {
-    return str_replace(" ", "_", $chapter) . '-' . sprintf("%04d",$troop);
+function get_unit_token($chapter, $unittype, $unitnum) {
+    return str_replace(" ", "_", $chapter) . '-' . $unitype . '-' . sprintf("%04d",$unitnum);
 }
