@@ -55,12 +55,28 @@ SELECT
     unit.unit_num AS unit_num,
     COUNT(rpts.UnitNumber) AS num_reports,
     MAX(rpts.ElectionDate) AS electiondate,
-    COUNT(sch.UnitNum) AS num_reqs
+    COUNT(sch.UnitNum) AS num_reqs,
+    IFNULL(MAX(rpts.NumberElected),0) AS num_reported,
+    IFNULL(m.NumCandidatesSubmitted,0) AS num_submitted,
+    COUNT(DISTINCT crt.BSAMemberID) AS num_certified
 FROM
     wp_oa_units AS unit
     LEFT JOIN wp_oa_chapters AS chp ON BINARY unit.chapter_num = BINARY chp.chapter_num
     LEFT JOIN wp_oa_ue_units AS rpts ON BINARY chp.ChapterName = BINARY rpts.ChapterName AND BINARY unit.unit_type = BINARY rpts.UnitType AND BINARY unit.unit_num = BINARY rpts.UnitNumber
     LEFT JOIN wp_oa_ue_schedules AS sch ON BINARY chp.SelectorName = BINARY sch.ChapterName AND BINARY unit.unit_type = BINARY sch.UnitType AND BINARY unit.unit_num = BINARY sch.UnitNum
+    LEFT JOIN wp_oa_ue_candidates_merged AS crt ON BINARY chp.ChapterName = BINARY crt.ChapterName AND BINARY unit.unit_type = BINARY crt.UnitType AND BINARY unit.unit_num = BINARY crt.UnitNumber
+    LEFT OUTER JOIN (
+        SELECT
+            COUNT(DISTINCT BSAMemberID) AS NumCandidatesSubmitted,
+            ChapterName,
+            UnitType,
+            UnitNumber
+        FROM wp_oa_ue_candidates
+        GROUP BY ChapterName, UnitType, UnitNumber
+        ) m
+        ON BINARY m.ChapterName = BINARY chp.ChapterName
+        AND BINARY m.UnitType = BINARY unit.unit_type
+        AND BINARY m.UnitNumber = BINARY unit.unit_num
 ";
     if (!($chapter == "all")) {
         $query = $query . "WHERE chp.ChapterName = %s";
@@ -112,6 +128,9 @@ ORDER BY unit.chapter_num, unit.unit_type, unit.unit_num
         }
         $data[$row->chapter][$unit]['num_reports'] = $row->num_reports;
         $data[$row->chapter][$unit]['num_reqs'] = $row->num_reqs;
+        $data[$row->chapter][$unit]['num_reported'] = $row->num_reported;
+        $data[$row->chapter][$unit]['num_submitted'] = $row->num_submited;
+        $data[$row->chapter][$unit]['num_certified'] = $row->num_certified;
         $data[$row->chapter][$unit]['scheduled'] = 0;
         $data[$row->chapter][$unit]['election_date'] = '';
         if ((array_key_exists($row->chapter, $elecscheds)) &&
@@ -120,8 +139,13 @@ ORDER BY unit.chapter_num, unit.unit_type, unit.unit_num
             $data[$row->chapter][$unit]['election_date'] = $elecscheds[$row->chapter][$unit];
         }
         if ($data[$row->chapter][$unit]['num_reports'] > 0) {
-            $completed[$row->chapter] = $completed[$row->chapter] + 1;
-            $data[$row->chapter][$unit]['status'] = 'completed';
+            if (($row->num_reported != $row->num_submitted) && ($row->num_certified == 0)) {
+                $pastdue[$row->chapter] = $pastdue[$row->chapter] + 1;
+                $data[$row->chapter][$unit]['status'] = 'pastdue';
+            } else {
+                $completed[$row->chapter] = $completed[$row->chapter] + 1;
+                $data[$row->chapter][$unit]['status'] = 'completed';
+            }
             $data[$row->chapter][$unit]['election_date'] = $row->electiondate;
         } else if ($data[$row->chapter][$unit]['scheduled'] > 0) {
             if (strtotime("+3 days",strtotime($data[$row->chapter][$unit]['election_date'])) < time()) {
