@@ -166,6 +166,7 @@ function nslodge_ue_merge_unit() {
         'BSAMemberID',
         'Gender',
         'HomeEmail',
+        'ParentEmail',
         'HomePhone',
         'AddressLine1',
         'AddressLine2',
