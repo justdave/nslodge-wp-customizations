@@ -390,7 +390,7 @@ function nslodge_ue_do_cvs_export() {
     echo '"Election Date","Chapter","Unit Type","Unit Number","First Name","Middle Name","Last Name","Suffix","BSA ID","Gender","Home Email Address","Parent Email Address","Home Phone","Home Street 1","Home Street 2","Home City","Home State","Home Zip Code","Date Of Birth"' . "\n";
     $candidate_columnlist = [
         'ElectionDate',
-        'ChapterName',
+        'SelectorName',
         'UnitType',
         'UnitNumber',
         'FirstName',
@@ -417,7 +417,9 @@ function nslodge_ue_do_cvs_export() {
             $UnitType = $matches[2];
             $UnitNumber = $matches[3];
             $unit_rows = $wpdb->get_results($wpdb->prepare("SELECT `" . join('`, `',$candidate_columnlist) .
-                "` FROM wp_oa_ue_candidates_merged WHERE ChapterName = %s AND UnitType = %s AND UnitNumber = %d", $ChapterName, $UnitType, $UnitNumber));
+                "` FROM wp_oa_ue_candidates_merged AS m
+                   LEFT JOIN wp_oa_chapters AS c ON m.ChapterName = c.ChapterName
+                   WHERE ChapterName = %s AND UnitType = %s AND UnitNumber = %d", $ChapterName, $UnitType, $UnitNumber));
             foreach ($unit_rows as $row) {
                 $comma = "";
                 foreach ($candidate_columnlist as $column) {

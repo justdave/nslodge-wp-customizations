@@ -500,7 +500,7 @@ function nslodge_ue_do_adult_cvs_export() {
     echo '"Election Date","Chapter","Unit Type","Unit Number","First Name","Middle Name","Last Name","Suffix","BSA ID","Home Email Address","Home Phone","Home Street 1","Home Street 2","Home City","Home State","Home Zip Code","Gender","Date Of Birth"' . "\n";
     $candidate_columnlist = [
         'ElectionDate',
-        'ChapterName',
+        'SelectorName',
         'UnitType',
         'UnitNumber',
         'FirstName',
@@ -524,7 +524,8 @@ function nslodge_ue_do_adult_cvs_export() {
         if (preg_match('/^select-(\d+)$/', $key, $matches)) {
             $bsaid = $matches[1];
             $adult_rows = $wpdb->get_results($wpdb->prepare("SELECT `" . join('`, `',$candidate_columnlist) .
-                "` FROM wp_oa_ue_adult_nominations WHERE BSAMemberID = %d", $bsaid));
+                "` FROM wp_oa_ue_adult_nominations AS n" .
+                " LEFT JOIN wp_oa_chapters AS c ON n.ChapterName = c.ChapterName WHERE BSAMemberID = %d", $bsaid));
             foreach ($adult_rows as $row) {
                 $comma = "";
                 foreach ($candidate_columnlist as $column) {
