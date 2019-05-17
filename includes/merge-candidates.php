@@ -419,7 +419,7 @@ function nslodge_ue_do_cvs_export() {
             $unit_rows = $wpdb->get_results($wpdb->prepare("SELECT `" . join('`, `',$candidate_columnlist) .
                 "` FROM wp_oa_ue_candidates_merged AS m
                    LEFT JOIN wp_oa_chapters AS c ON m.ChapterName = c.ChapterName
-                   WHERE ChapterName = %s AND UnitType = %s AND UnitNumber = %d", $ChapterName, $UnitType, $UnitNumber));
+                   WHERE m.ChapterName = %s AND UnitType = %s AND UnitNumber = %d", $ChapterName, $UnitType, $UnitNumber));
             foreach ($unit_rows as $row) {
                 $comma = "";
                 foreach ($candidate_columnlist as $column) {
