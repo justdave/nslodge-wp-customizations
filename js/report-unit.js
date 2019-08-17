@@ -24,6 +24,7 @@ $j(document).ready(function(){
   $j('#election_type').change(function(){
       if ($j('#election_type').val() == 'election') {
           $j('.ns_type_election').show();
+          $j('#unit_contacted').prop('checked', false);
           $j('.ns_type_all').show();
           $j('#unit_contact_required').hide();
       }
