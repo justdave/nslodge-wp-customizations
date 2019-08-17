@@ -22,7 +22,7 @@ function ns_ue_ajax_enqueue_scripts() {
     '/ue/evaluation'        => [ 'pagejs' => 'js/unit-picker.js', 'unitwidget' => TRUE ],
     '/ue/request'           => [ 'pagejs' => 'js/unit-picker.js', 'unitwidget' => TRUE ],
     '/unit-contact-info-update' => [ 'pagejs' => 'js/unit-picker.js', 'unitwidget' => TRUE ],
-    '/transfer'             => [ 'pagejs' => 'js/unit-picker.js', 'unitwidget' => TRUE ],
+    '/transfer'             => [ 'pagejs' => 'js/transfer.js', 'unitwidget' => TRUE ],
     '/chaptermeetings'      => [ 'pagejs' => 'js/chapter-meetings.js' ]
     );
     $pageuri = $_SERVER['REQUEST_URI'];
