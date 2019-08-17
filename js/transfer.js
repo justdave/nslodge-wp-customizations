@@ -138,6 +138,7 @@ $j(document).ready(function(){
 });
 
 function change_troop(){
+    $j('#recommendation').val("");
     $j('#recommendation').change();
     return false;
 }
