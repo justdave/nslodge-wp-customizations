@@ -71,7 +71,6 @@ $j(document).ready(function(){
     return li;
   }
   $j('#switch_to_unit').click(function(){
-      $j('#unit_unpicked').hide();
       $j('#district_picker').hide();
       $j('#troop_picker').show();
       $j('#district_search').val("");
@@ -82,7 +81,6 @@ $j(document).ready(function(){
       return false;
   });
   $j('#switch_to_district').click(function(){
-      $j('#unit_unpicked').hide();
       $j('#district_picker').show();
       $j('#troop_picker').hide();
       $j('#district_search').val("");
@@ -131,7 +129,8 @@ $j(document).ready(function(){
 });
 
 function change_troop() {
-    $j('#unit_unpicked').show();
     $j('#district_picker').hide();
-    $j('#troop_picker').hide();
+    $j('#troop_picker').show();
+    $j('#district_search').val("");
+    $j('#troop_picked').hide();
 }
