@@ -53,19 +53,54 @@ SELECT
     chp.ChapterName AS chapter,
     unit.unit_type AS unit_type,
     unit.unit_num AS unit_num,
-    COUNT(rpts.UnitNumber) AS num_reports,
-    MAX(rpts.ElectionDate) AS electiondate,
-    COUNT(sch.UnitNum) AS num_reqs,
+    IFNULL(rpts.num_reports,0) AS num_reports,
+    IFNULL(rpts.electiondate,'') AS electiondate,
+    IFNULL(sch.UnitCount,0) AS num_reqs,
     IFNULL(MAX(rpts.NumberElected),0) AS num_reported,
     IFNULL(m.NumCandidatesSubmitted,0) AS num_submitted,
-    COUNT(DISTINCT crt.BSAMemberID) AS num_certified
+    IFNULL(crt.num_certified,0) AS num_certified
 FROM
     wp_oa_units AS unit
     LEFT JOIN wp_oa_chapters AS chp ON BINARY unit.chapter_num = BINARY chp.chapter_num
-    LEFT JOIN wp_oa_ue_units AS rpts ON BINARY chp.ChapterName = BINARY rpts.ChapterName AND BINARY unit.unit_type = BINARY rpts.UnitType AND BINARY unit.unit_num = BINARY rpts.UnitNumber
-    LEFT JOIN wp_oa_ue_schedules AS sch ON BINARY chp.SelectorName = BINARY sch.ChapterName AND BINARY unit.unit_type = BINARY sch.UnitType AND BINARY unit.unit_num = BINARY sch.UnitNum
-    LEFT JOIN wp_oa_ue_candidates_merged AS crt ON BINARY chp.ChapterName = BINARY crt.ChapterName AND BINARY unit.unit_type = BINARY crt.UnitType AND BINARY unit.unit_num = BINARY crt.UnitNumber
     LEFT OUTER JOIN (
+        SELECT
+            COUNT(UnitNumber) AS num_reports,
+            MAX(ElectionDate) AS electiondate,
+            NumberElected,
+            ChapterName,
+            UnitType,
+            UnitNumber
+        FROM wp_oa_ue_units
+        GROUP BY ChapterName, UnitType, UnitNumber
+        ) rpts
+        ON BINARY rpts.ChapterName = BINARY chp.ChapterName
+        AND BINARY rpts.UnitType = BINARY unit.unit_type
+        AND BINARY rpts.UnitNumber = BINARY unit.unit_num
+    LEFT JOIN (
+        SELECT
+            COUNT(UnitNum) as UnitCount,
+            ChapterName,
+            UnitType,
+            UnitNum as UnitNumber
+        FROM wp_oa_ue_schedules
+        GROUP BY ChapterName, UnitType, UnitNumber
+       ) sch
+        ON BINARY sch.ChapterName = BINARY chp.ChapterName
+        AND BINARY sch.UnitType = BINARY unit.unit_type
+        AND BINARY sch.UnitNumber = BINARY unit.unit_num
+    LEFT JOIN (
+        SELECT
+            COUNT(DISTINCT BSAMemberID) AS num_certified,
+            ChapterName,
+            UnitType,
+            UnitNumber
+        FROM wp_oa_ue_candidates_merged
+        GROUP BY ChapterName, UnitType, UnitNumber
+        ) crt
+        ON BINARY crt.ChapterName = BINARY chp.ChapterName
+        AND BINARY crt.UnitType = BINARY unit.unit_type
+        AND BINARY crt.UnitNumber = BINARY unit.unit_num
+    LEFT JOIN (
         SELECT
             COUNT(DISTINCT BSAMemberID) AS NumCandidatesSubmitted,
             ChapterName,
