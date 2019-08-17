@@ -495,7 +495,7 @@ ORDER BY un.unit_type, un.unit_num, un.district_num
         echo '<p style="font-size: large;">If you have corrections or additions for troop contact info, <a href="/unit-contact-info-update">submit it here</a>.</p>';
         echo '<div class="oa_chapter_info_wrapper">';
         echo '<table class="wp_table oa_chapter_info">';
-        echo "\n<tr><th>Status</th><th>Reports Filed</th><th>District</th><th>Unit</th><th>City</th><th>Election Date</th><th>Unit Leader</th><th>Committee Chair</th><th>OA Rep</th></tr>\n";
+        echo "\n<tr><th>Status</th><th>Reports Filed</th><th>Candidates Reported</th><th>District</th><th>Unit</th><th>City</th><th>Election Date</th><th>Unit Leader</th><th>Committee Chair</th><th>OA Rep</th></tr>\n";
         $statusname = [
             "notscheduled" => "Not Scheduled",
             "requested"    => "Requested",
@@ -508,6 +508,11 @@ ORDER BY un.unit_type, un.unit_num, un.district_num
             echo '<tr class="elec_' . $data[$row->chapter][$unit]['status'] . '" style="color: black;">';
             echo "<td>" . htmlspecialchars($statusname[$data[$row->chapter][$unit]['status']]) . "</td>";
             echo "<td>" . htmlspecialchars($data[$row->chapter][$unit]['num_reports']) . "</td>\n";
+            if ($data[$row->chapter][$unit]['num_certified']>0) {
+                echo "<td>" . htmlspecialchars($data[$row->chapter][$unit]['num_certified']) . "</td>\n";
+            } else {
+                 echo "<td>" . htmlspecialchars($data[$row->chapter][$unit]['num_submitted']) . "</td>\n";
+            }
             echo "<td>" . htmlspecialchars($row->district_name) . "</td>\n";
             echo "<td>" . htmlspecialchars($unit) . "</td>\n";
             echo "<td>" . htmlspecialchars($row->unit_city) . "</td>\n";
