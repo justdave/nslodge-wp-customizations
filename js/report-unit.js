@@ -14,15 +14,23 @@ $j(document).ready(function(){
   $j('#req').attr('readonly', true);
   $j('#troop_picked').hide();
   $j('#change_troop').click(change_troop);
+  $j('#unit_contacted').change(function(){
+      if ($j('#unit_contacted').is(':checked')) {
+        $j('.ns_type_all').show();
+      } else {
+        $j('.ns_type_all').hide();
+      }
+  });
   $j('#election_type').change(function(){
       if ($j('#election_type').val() == 'election') {
           $j('.ns_type_election').show();
           $j('.ns_type_all').show();
+          $j('#unit_contact_required').hide();
       }
       else if (($j('#election_type').val() == 'noone_eligible') ||
                ($j('#election_type').val() == 'non_participant')) {
           $j('.ns_type_election').hide();
-          $j('.ns_type_all').show();
+          $j('#unit_contact_required').show();
           $j('input[name=ElectionDate]').val($j.datepicker.formatDate('yy-mm-dd', new Date()));
 //          $j('select[name=camp]').val('Other (explain in Additional Information below)');
           $j('textarea[name=UETeamNames]').val('None');
@@ -44,6 +52,7 @@ $j(document).ready(function(){
       else if ($j('#election_type').val() == '') {
           $j('.ns_type_election').hide();
           $j('.ns_type_all').hide();
+          $j('#unit_contact_required').hide();
       }
   });
   $j('#troopsearch').autocomplete({
