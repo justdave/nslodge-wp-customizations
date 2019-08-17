@@ -136,6 +136,7 @@ function nslodge_ue_merge_unit() {
         'SubmitterType',
         'ElectionDate',
         'camp',
+        'notification',
         'MeetingLocation',
         'UETeamNames',
         'RegActiveYouth',
