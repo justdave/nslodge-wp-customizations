@@ -30,6 +30,7 @@ $j(document).ready(function(){
       else if (($j('#election_type').val() == 'noone_eligible') ||
                ($j('#election_type').val() == 'non_participant')) {
           $j('.ns_type_election').hide();
+          $j('.ns_type_all').hide();
           $j('#unit_contact_required').show();
           $j('input[name=ElectionDate]').val($j.datepicker.formatDate('yy-mm-dd', new Date()));
 //          $j('select[name=camp]').val('Other (explain in Additional Information below)');
