@@ -53,7 +53,6 @@ $j(document).ready(function(){
                     $j('#nominate_leader').prop('checked', false);
                 }
             }
-
         })
         return false;
     },
@@ -71,33 +70,27 @@ $j(document).ready(function(){
       .appendTo(ul);
     return li;
   }
-
-  $j('#recommendation').change(function(){
-      if ($j('#recommendation').val() == 'Local Unit') {
-          $j('#unit_unpicked').hide();
-          $j('#district_picker').hide();
-          $j('#troop_picker').show();
-      }
-      else if ($j('#recommendation').val() == 'District/Council') {
-          $j('#unit_unpicked').hide();
-          $j('#district_picker').show();
-          $j('#troop_picker').hide();
-      }
-      else {
-          $j('#unit_unpicked').show();
-          $j('#district_picker').hide();
-          $j('#troop_picker').hide();
-      }
+  $j('#switch_to_unit').click(function(){
+      $j('#unit_unpicked').hide();
+      $j('#district_picker').hide();
+      $j('#troop_picker').show();
       $j('#district_search').val("");
       $j('#troop_picked').hide();
-      $j('#adult_main_form').hide();
-      $j('#adult_unit_loading').hide();
-      $j('#adult_unit_info').hide();
-      $j('#report_submitted_no_youth').hide();
-      $j('#exceeded_nominations').hide();
       $j('input[name=ChapterName]').val("");
       $j('input[name=UnitType]').val("");
       $j('input[name=UnitNumber]').val("");
+      return false;
+  });
+  $j('#switch_to_district').click(function(){
+      $j('#unit_unpicked').hide();
+      $j('#district_picker').show();
+      $j('#troop_picker').hide();
+      $j('#district_search').val("");
+      $j('#troop_picked').hide();
+      $j('input[name=ChapterName]').val("");
+      $j('input[name=UnitType]').val("");
+      $j('input[name=UnitNumber]').val("");
+      return false;
   });
   $j('#district_search').change(function(){
       unittype = 'District';
@@ -137,10 +130,8 @@ $j(document).ready(function(){
 
 });
 
-function change_troop(){
-    $j('#recommendation').val("");
-    $j('#recommendation').change();
-    return false;
+function change_troop() {
+    $j('#unit_unpicked').show();
+    $j('#district_picker').hide();
+    $j('#troop_picker').hide();
 }
-
-
