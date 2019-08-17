@@ -15,7 +15,7 @@ $j(document).ready(function(){
   $j('#troop_picked').hide();
   $j('#change_troop').click(change_troop);
   $j('#unit_contacted').change(function(){
-      if ($j('#unit_contacted').val() == 'true') {
+      if ($j('#unit_contacted').is(':checked')) {
         $j('.ns_type_all').show();
       } else {
         $j('.ns_type_all').hide();

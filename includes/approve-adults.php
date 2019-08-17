@@ -352,12 +352,14 @@ function nslodge_ue_view_nomination() {
 <input type="hidden" id="ue_adult_unitnum" name="ue_adult_unitnum" value="' . esc_html($unitnum) . '">
 <input type="hidden" id="ue_adult_bsaid" name="ue_adult_bsaid" value="' . esc_html($bsaid) . '">
 ';
-    $nomination = $wpdb->get_row($wpdb->prepare("SELECT `" . join ("`, `",$nomination_columns) . "` FROM wp_oa_ue_adults WHERE ChapterName = %s AND UnitType = %s AND CAST(UnitNumber AS UNSIGNED) = %s AND BSAMemberID = %s", $chapter, $unittype, $unitnum, $bsaid));
-    $output .= '<table class="nomination_form">' . "\n";
-    foreach ($nomination_columns as $column) {
-        $output .= "<tr><th>" . esc_html($column) . "</th><td>" . esc_html($nomination->$column) . "</td></tr>\n";
+    $nominations = $wpdb->get_results($wpdb->prepare("SELECT `" . join ("`, `",$nomination_columns) . "` FROM wp_oa_ue_adults WHERE ChapterName = %s AND UnitType = %s AND CAST(UnitNumber AS UNSIGNED) = %s AND BSAMemberID = %s", $chapter, $unittype, $unitnum, $bsaid));
+    foreach ($nominations as $nomination) {
+        $output .= '<table class="nomination_form">' . "\n";
+        foreach ($nomination_columns as $column) {
+            $output .= "<tr><th>" . esc_html($column) . "</th><td>" . esc_html($nomination->$column) . "</td></tr>\n";
+        }
+        $output .= "</table>\n";
     }
-    $output .= "</table>\n";
     $output .= '<input type="submit" name="submit" id="ue_approve" value="Set to Approved">';
     $output .= '<input type="submit" name="submit" id="ue_reject" value="Set to Rejected">';
     $output .= '<input type="submit" name="submit" id="ue_pending" value="Set to Pending">';
