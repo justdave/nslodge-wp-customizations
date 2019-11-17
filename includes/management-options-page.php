@@ -163,13 +163,9 @@ function nscustom_options()
                         $unit_desig = $rowData['unit_desig'];
                         if ($unit_desig == "" && $unit_desig !== "") { $rowData['unit_desig'] = ""; }
                         if ($rowData['unit_desig'] != "") { $unit_desig = "-" . $rowData['unit_desig']; }
-                        if ($unit_desig == "-GT") {
-                            echo "[X] Skipping new girl unit because it's not 2020 yet: " . $district_name . " " . $rowData['unit_type'] . " " . $rowData['unit_num'] . $unit_desig . "\n";
-                        } else {
-                            echo "[+] Adding new unit: " . $district_name . " " . $rowData['unit_type'] . " " . $rowData['unit_num'] . $unit_desig . "\n";
-                            if ($wpdb->insert("wp_oa_units", $rowData, array('%d','%d','%s','%d','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s'))) {
-                                $insertrecordcount++;
-                            }
+                        echo "[+] Adding new unit: " . $district_name . " " . $rowData['unit_type'] . " " . $rowData['unit_num'] . $unit_desig . "\n";
+                        if ($wpdb->insert("wp_oa_units", $rowData, array('%d','%d','%s','%d','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s'))) {
+                            $insertrecordcount++;
                         }
                     } else {
                         # if we got here, there's an existing row for this troop. Check if it needs updating.
