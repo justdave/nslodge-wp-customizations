@@ -1,1 +1,2 @@
 /vendor/dompdf/dompdf/lib/fonts/*.ufm.php
+.DS_Store
