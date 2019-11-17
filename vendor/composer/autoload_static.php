@@ -68,9 +68,14 @@ class ComposerStaticInit51c2048d56b290d329ab28561dcf0414
     );
 
     public static $prefixLengthsPsr4 = array (
+        'S' => 
+        array (
+            'Svg\\' => 4,
+        ),
         'P' => 
         array (
             'Psr\\SimpleCache\\' => 16,
+            'Picqer\\Barcode\\' => 15,
             'PhpOffice\\PhpSpreadsheet\\' => 25,
         ),
         'M' => 
@@ -92,9 +97,17 @@ class ComposerStaticInit51c2048d56b290d329ab28561dcf0414
     );
 
     public static $prefixDirsPsr4 = array (
+        'Svg\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/phenx/php-svg-lib/src/Svg',
+        ),
         'Psr\\SimpleCache\\' => 
         array (
             0 => __DIR__ . '/..' . '/psr/simple-cache/src',
+        ),
+        'Picqer\\Barcode\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/picqer/php-barcode-generator/src',
         ),
         'PhpOffice\\PhpSpreadsheet\\' => 
         array (
@@ -121,10 +134,6 @@ class ComposerStaticInit51c2048d56b290d329ab28561dcf0414
     public static $prefixesPsr0 = array (
         'S' => 
         array (
-            'Svg\\' => 
-            array (
-                0 => __DIR__ . '/..' . '/phenx/php-svg-lib/src',
-            ),
             'Sabberworm\\CSS' => 
             array (
                 0 => __DIR__ . '/..' . '/sabberworm/php-css-parser/lib',
