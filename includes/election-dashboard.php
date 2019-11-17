@@ -612,7 +612,7 @@ function nslodge_ue_dashboard_list_chapters() {
     <?php } ?>
     </div>
     <div id="ue_master_chart" style="width: 500px; float: right;">
-    <h5 style="margin-top: 0px;">2018-2019 Unit Election Status</h5>
+    <h5 style="margin-top: 0px;">2019-2020 Unit Election Status</h5>
     <?php
     ns_election_widget();
     ?>
