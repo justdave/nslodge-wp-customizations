@@ -1,7 +1,7 @@
 <?php
 /*
  * Plugin Name: NSLodge Custom Stuff
- * Plugin URI: https://nslodge.org/
+ * Plugin URI: https://github.com/justdave/nslodge-wp-customizations
  * Description: Wordpress plugin to house custom stuff for this website
  * Version: 1.0
  * Author: Dave Miller
