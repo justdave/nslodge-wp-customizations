@@ -53,6 +53,7 @@ SELECT
     chp.ChapterName AS chapter,
     unit.unit_type AS unit_type,
     unit.unit_num AS unit_num,
+    unit.unit_desig AS unit_desig,
     IFNULL(rpts.num_reports,0) AS num_reports,
     IFNULL(rpts.electiondate,'') AS electiondate,
     IFNULL(sch.UnitCount,0) AS num_reqs,
@@ -69,56 +70,64 @@ FROM
             NumberElected,
             ChapterName,
             UnitType,
-            UnitNumber
+            UnitNumber,
+            UnitDesignator
         FROM wp_oa_ue_units
-        GROUP BY ChapterName, UnitType, UnitNumber
+        GROUP BY ChapterName, UnitType, UnitNumber, UnitDesignator
         ) rpts
         ON BINARY rpts.ChapterName = BINARY chp.ChapterName
         AND BINARY rpts.UnitType = BINARY unit.unit_type
         AND BINARY rpts.UnitNumber = BINARY unit.unit_num
+        AND BINARY rpts.UnitDesignator = BINARY unit.unit_desig
     LEFT JOIN (
         SELECT
             COUNT(UnitNum) as UnitCount,
             ChapterName,
             UnitType,
-            UnitNum as UnitNumber
+            UnitNum as UnitNumber,
+            UnitDesignator
         FROM wp_oa_ue_schedules
-        GROUP BY ChapterName, UnitType, UnitNumber
+        GROUP BY ChapterName, UnitType, UnitNumber, UnitDesignator
        ) sch
         ON BINARY sch.ChapterName = BINARY chp.ChapterName
         AND BINARY sch.UnitType = BINARY unit.unit_type
         AND BINARY sch.UnitNumber = BINARY unit.unit_num
+        AND BINARY sch.UnitDesignator = BINARY unit.unit_desig
     LEFT JOIN (
         SELECT
             COUNT(DISTINCT BSAMemberID) AS num_certified,
             ChapterName,
             UnitType,
-            UnitNumber
+            UnitNumber,
+            UnitDesignator
         FROM wp_oa_ue_candidates_merged
-        GROUP BY ChapterName, UnitType, UnitNumber
+        GROUP BY ChapterName, UnitType, UnitNumber, UnitDesignator
         ) crt
         ON BINARY crt.ChapterName = BINARY chp.ChapterName
         AND BINARY crt.UnitType = BINARY unit.unit_type
         AND BINARY crt.UnitNumber = BINARY unit.unit_num
+        AND BINARY crt.UnitDesignator = BINARY unit.unit_desig
     LEFT JOIN (
         SELECT
             COUNT(DISTINCT BSAMemberID) AS NumCandidatesSubmitted,
             ChapterName,
             UnitType,
-            UnitNumber
+            UnitNumber,
+            UnitDesignator
         FROM wp_oa_ue_candidates
-        GROUP BY ChapterName, UnitType, UnitNumber
+        GROUP BY ChapterName, UnitType, UnitNumber, UnitDesignator
         ) m
         ON BINARY m.ChapterName = BINARY chp.ChapterName
         AND BINARY m.UnitType = BINARY unit.unit_type
         AND BINARY m.UnitNumber = BINARY unit.unit_num
+        AND BINARY m.UnitDesignator = BINARY unit.unit_desig
 ";
     if (!($chapter == "all")) {
         $query = $query . "WHERE chp.ChapterName = %s";
     }
     $query = $query . "
-GROUP BY unit.chapter_num, unit.unit_type, unit.unit_num
-ORDER BY unit.chapter_num, unit.unit_type, unit.unit_num
+GROUP BY unit.chapter_num, unit.unit_type, unit.unit_num, unit.unit_desig
+ORDER BY unit.chapter_num, unit.unit_type, unit.unit_num, unit.unit_desig
 ";
     if (!($chapter == "all")) {
         $q = $wpdb->prepare($query, Array( $chapter ) );
@@ -136,7 +145,7 @@ ORDER BY unit.chapter_num, unit.unit_type, unit.unit_num
     $data = [];
     $elecscheds = nslodge_ue_getelections('all');
     foreach ($results AS $row) {
-        $unit = $row->unit_type . " " . $row->unit_num;
+        $unit = ns_format_unit($row->unit_type, $row->unit_num, $row->unit_desig);
         if (!array_key_exists($row->chapter, $completed)) {
             $completed[$row->chapter] = 0;
         }
@@ -485,6 +494,7 @@ SELECT
     district_name,
     unit_type,
     unit_num,
+    unit_desig,
     unit_city,
     charter_org,
     ul_full_name,
@@ -507,8 +517,8 @@ FROM
     wp_oa_districts AS di ON un.district_num = di.district_num
 WHERE
     un.chapter_num = %d
-GROUP BY un.district_num, un.unit_type, un.unit_num
-ORDER BY un.unit_type, un.unit_num, un.district_num
+GROUP BY un.district_num, un.unit_type, un.unit_num, un.unit_desig
+ORDER BY un.unit_type, un.unit_num, un.unit_desig, un.district_num
     ",
         Array($chapternum)));
         $elecdata = ns_get_electdata($chapter);
@@ -539,7 +549,7 @@ ORDER BY un.unit_type, un.unit_num, un.district_num
             "pastdue"      => "Missing Paperwork"
         ];
         foreach ($results as $row) {
-            $unit = $row->unit_type . " " . $row->unit_num;
+            $unit = ns_format_unit($row->unit_type, $row->unit_num, $row->unit_desig);
             echo '<tr class="elec_' . $data[$row->chapter][$unit]['status'] . '" style="color: black;">';
             echo "<td>" . htmlspecialchars($statusname[$data[$row->chapter][$unit]['status']]) . "</td>";
             echo "<td>" . htmlspecialchars($data[$row->chapter][$unit]['num_reports']) . "</td>\n";

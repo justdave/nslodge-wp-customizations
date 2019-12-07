@@ -62,6 +62,7 @@ $j(document).ready(function(){
     select: function( event, ui ) {
         $j("input[name=ChapterName]").val(ui.item.chapter_name);
         $j("input[name=UnitType]").val(ui.item.unit_type);
+        $j("input[name=UnitDesignator]").val(ui.item.unit_desig);
         $j("input[name=UnitNumber]").val(ui.item.unit_num);
         $j("input[name=UnitLeaderName]").val(ui.item.ul_full_name);
         $j('#troop_result').html(ui.item.label);
@@ -77,7 +78,10 @@ $j(document).ready(function(){
     if (city.length > 2) {
         city = ' - ' + city;
     }
-    item.label = item.district_name + " - " + item.unit_type + " " + item.unit_num + city + " (" + item.SelectorName + ")";
+    desig = item.unit_desig;
+    if (!desig) { desig = "" }
+    else { desig = ' ' + desig.substring(0,1); }
+    item.label = item.district_name + " - " + item.unit_type + " " + item.unit_num + desig + city + " (" + item.SelectorName + ")";
     li = $j('<li>')
       .attr("data-value", JSON.stringify(item))
       .append(item.label)

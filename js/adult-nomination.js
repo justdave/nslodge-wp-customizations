@@ -34,6 +34,7 @@ $j(document).ready(function(){
         $j("input[name=ChapterName]").val(ui.item.chapter_name);
         $j("input[name=UnitType]").val(ui.item.unit_type);
         $j("input[name=UnitNumber]").val(ui.item.unit_num);
+        $j("input[name=UnitDesignator]").val(ui.item.unit_desig);
         $j("#ULName").val(ui.item.ul_full_name);
         $j("#CCName").val(ui.item.cc_full_name);
         $j('#troop_result').html(ui.item.label);
@@ -48,7 +49,8 @@ $j(document).ready(function(){
                 action : 'ns_get_unit_candidate_meta',
                 chapter : ui.item.chapter_name,
                 unit_type : ui.item.unit_type,
-                unit_num : ui.item.unit_num
+                unit_num : ui.item.unit_num,
+                unit_desig : ui.item.unit_desig
             },
             success : function( response ) {
                 num_allowed = 0;
@@ -88,7 +90,10 @@ $j(document).ready(function(){
     if (city.length > 2) {
         city = ' - ' + city;
     }
-    item.label = item.district_name + " - " + item.unit_type + " " + item.unit_num + city + " (" + item.SelectorName + ")";
+    desig = item.unit_desig;
+    if (!desig) { desig = "" }
+    else { desig = ' ' + desig.substring(0,1); }
+    item.label = item.district_name + " - " + item.unit_type + " " + item.unit_num + desig + city + " (" + item.SelectorName + ")";
     li = $j('<li>')
       .attr("data-value", JSON.stringify(item))
       .append(item.label)

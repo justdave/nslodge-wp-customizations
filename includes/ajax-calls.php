@@ -53,12 +53,12 @@ function ns_get_troops_autocomplete() {
     $term = $_GET['term'];
     $term = intval($term);
     $results = $wpdb->get_results($wpdb->prepare("
-        SELECT unit_type, unit_num, ch.ChapterName AS chapter_name, SelectorName, district_name, unit_city, charter_org, ul_full_name, cc_full_name
+        SELECT unit_type, unit_num, unit_desig, ch.ChapterName AS chapter_name, SelectorName, district_name, unit_city, charter_org, ul_full_name, cc_full_name
         FROM wp_oa_units AS un
         LEFT JOIN wp_oa_chapters AS ch ON un.chapter_num = ch.chapter_num
         LEFT JOIN wp_oa_districts AS di ON un.district_num = di.district_num
         WHERE un.unit_num LIKE %s
-        ORDER BY un.unit_num
+        ORDER BY un.unit_num, un.unit_desig
     ", Array("%" . $term . "%")));
     wp_send_json($results);
 
@@ -72,38 +72,42 @@ function ns_get_unit_candidate_meta() {
     $chapter = $_GET['chapter'];
     $unit_type = $_GET['unit_type'];
     $unit_num = $_GET['unit_num'];
-    //$unit_desig = $_GET['unit_desig'];
+    $unit_desig = $_GET['unit_desig'];
     $results = $wpdb->get_row($wpdb->prepare("
         SELECT COUNT(DISTINCT(BSAMemberID)) AS num_candidates
         FROM wp_oa_ue_candidates
         WHERE ChapterName = %s
           AND UnitType = %s
           AND UnitNumber = %d
-    ", Array($chapter, $unit_type, $unit_num)));
+          AND UnitDesignator = %s
+    ", Array($chapter, $unit_type, $unit_num, $unit_desig)));
     $results2 = $wpdb->get_row($wpdb->prepare("
         SELECT COUNT(DISTINCT(BSAMemberID)) AS num_nominations
         FROM wp_oa_ue_adults
         WHERE ChapterName = %s
           AND UnitType = %s
           AND UnitNumber = %d
+          AND UnitDesignator = %s
           AND recommendation = 'Unit Recommendation'
-    ", Array($chapter, $unit_type, $unit_num)));
+    ", Array($chapter, $unit_type, $unit_num, $unit_desig)));
     $results3 = $wpdb->get_row($wpdb->prepare("
         SELECT COUNT(1) AS leader_nominated
         FROM wp_oa_ue_adults
         WHERE ChapterName = %s
           AND UnitType = %s
           AND UnitNumber = %d
+          AND UnitDesignator = %s
           AND recommendation = 'Unit Recommendation'
           AND CurrentPosition IN('Scoutmaster','Crew Adviser','Skipper')
-    ", Array($chapter, $unit_type, $unit_num)));
+    ", Array($chapter, $unit_type, $unit_num, $unit_desig)));
     $results4 = $wpdb->get_row($wpdb->prepare("
         SELECT MAX(ElectionDate) AS election_date
         FROM wp_oa_ue_units
         WHERE ChapterName = %s
           AND UnitType = %s
           AND UnitNumber = %d
-        ", Array($chapter, $unit_type, $unit_num)));
+          AND UnitDesignator = %s
+        ", Array($chapter, $unit_type, $unit_num, $unit_desig)));
     foreach ($results2 as $key => $value) {
         $results->$key = $value;
     }

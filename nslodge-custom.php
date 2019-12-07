@@ -29,6 +29,7 @@
 
 // All of the meat is in the includes directory, to keep it organized.
 // Just pull it all in from here.
+require_once("includes/utility-functions.php"); // must be first
 require_once("includes/election-calendar-utils.php");
 require_once("includes/merge-candidates.php");
 require_once("includes/approve-adults.php");

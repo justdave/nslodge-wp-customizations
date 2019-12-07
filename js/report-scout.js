@@ -12,7 +12,7 @@ $j(document).ready(function(){
     cookiematch = document.cookie.match('(^|;)?formData=([^;]*)(;|$)');
     if (cookiematch) {
       var data = $j.parseJSON(cookiematch[2]);
-      var fieldList = ['ElectionDate','ChapterName','UnitType','UnitNumber','SubmitterName','SubmitterType','NumberElected'];
+      var fieldList = ['ElectionDate','ChapterName','UnitType','UnitNumber','UnitDesignator','SubmitterName','SubmitterType','NumberElected'];
       var arrayLength = fieldList.length;
       for (var i = 0; i < arrayLength; i++) {
         var name = fieldList[i];

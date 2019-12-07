@@ -53,6 +53,7 @@ SELECT
     u.ChapterName AS ChapterName,
     u.UnitType AS UnitType,
     CAST(u.UnitNumber AS unsigned) AS UnitNumberInt,
+    u.UnitDesignator AS UnitDesignator,
     COUNT(*) AS NumReports,
     MAX(u.NumberElected) AS NumCandidatesReported,
     m.NumCandidatesSubmitted AS NumCandidatesSubmitted
@@ -63,20 +64,22 @@ FROM
             COUNT(DISTINCT BSAMemberID) AS NumCandidatesSubmitted,
             ChapterName,
             UnitType,
-            UnitNumber
+            UnitNumber,
+            UnitDesignator
         FROM wp_oa_ue_candidates
-        GROUP BY ChapterName, UnitType, UnitNumber
+        GROUP BY ChapterName, UnitType, UnitNumber, UnitDesignator
         ) m
         ON m.ChapterName = u.ChapterName
         AND m.UnitType = u.UnitType
         AND m.UnitNumber = u.UnitNumber
+        AND m.UnitDesignator = u.UnitDesignator
 WHERE
-    BINARY CONCAT(u.ChapterName, u.UnitType, CAST(u.UnitNumber AS unsigned)) NOT IN (SELECT
-            BINARY CONCAT(c.ChapterName, c.UnitType, CAST(c.UnitNumber AS unsigned))
+    BINARY CONCAT(u.ChapterName, u.UnitType, CAST(u.UnitNumber AS unsigned), u.UnitDesignator) NOT IN (SELECT
+            BINARY CONCAT(c.ChapterName, c.UnitType, CAST(c.UnitNumber AS unsigned), c.UnitDesignator)
         FROM
             wp_oa_ue_candidates_merged c)
-GROUP BY u.ChapterName, u.UnitType, CAST(u.UnitNumber AS unsigned)
-ORDER BY u.ChapterName, u.UnitType, CAST(u.UnitNumber AS unsigned)
+GROUP BY u.ChapterName, u.UnitType, CAST(u.UnitNumber AS unsigned), u.UnitDesignator
+ORDER BY u.ChapterName, u.UnitType, CAST(u.UnitNumber AS unsigned), u.UnitDesignator
 ");
 
     $output = '
@@ -86,13 +89,15 @@ ORDER BY u.ChapterName, u.UnitType, CAST(u.UnitNumber AS unsigned)
 <input type="hidden" id="ue_merge_chapter" name="ue_merge_chapter" value="">
 <input type="hidden" id="ue_merge_unittype" name="ue_merge_unittype" value="">
 <input type="hidden" id="ue_merge_unitnum" name="ue_merge_unitnum" value="">
+<input type="hidden" id="ue_merge_unitdesig" name="ue_merge_unitdesig" value="">
 </form>
 </div>
 <script type="text/javascript"><!--
-function ue_merge_submit(chapter, unittype, unitnum) {
+function ue_merge_submit(chapter, unittype, unitnum, unitdesig) {
   document.getElementById("ue_merge_chapter").value = chapter;
   document.getElementById("ue_merge_unittype").value = unittype;
   document.getElementById("ue_merge_unitnum").value = unitnum;
+  document.getElementById("ue_merge_unitdesig").value = unitdesig;
   document.getElementById("ue_merge_form").submit();
   return true;
 }
@@ -102,14 +107,14 @@ function ue_merge_submit(chapter, unittype, unitnum) {
     $output .= "<table border=1><tr><th>Chapter</th><th>Unit</th><th>Number of<br>Reports<br>Submitted</th><th>Candidates<br>Reported<br>on Form</th><th>Candidates<br>with Scout Data<br>Submitted</th><th>Action</th></tr>\n";
     $count = 0;
     foreach ($results as $row) {
-        $link = $permalink . "?ue_merge_action=merge_unit&unit=" . $row->ChapterName . "|" . $row->UnitType . "|" . $row->UnitNumberInt;
+        $link = $permalink . "?ue_merge_action=merge_unit&unit=" . $row->ChapterName . "|" . $row->UnitType . "|" . $row->UnitNumberInt . "|" . $row->UnitDesignator;
         $style = "";
         $submitted = $row->NumCandidatesSubmitted;
         $reported = $row->NumCandidatesReported;
         if (!($submitted)) { $submitted = 0; }
         if ($submitted != $reported) { $style = ' style="background-color: red;"'; }
         if ($reported > 0) {
-            $output .= "<tr$style><td>" . esc_html($row->ChapterName) . "</td><td>" . esc_html($row->UnitType) . " " . esc_html($row->UnitNumberInt) . '</td><td>' . esc_html($row->NumReports) . '</td><td>' . esc_html($reported) . '</td><td>' . esc_html($submitted) . '</td><td><a href="#" onClick="ue_merge_submit(' . "'" . esc_html($row->ChapterName) . "','" . esc_html($row->UnitType) . "','" . esc_html($row->UnitNumberInt) . "'" . ');">Process this unit</a></td></tr>' . "\n";
+            $output .= "<tr$style><td>" . esc_html($row->ChapterName) . "</td><td>" . esc_html(ns_format_unit($row->UnitType, $row->UnitNumberInt, $row->UnitDesignator)) . '</td><td>' . esc_html($row->NumReports) . '</td><td>' . esc_html($reported) . '</td><td>' . esc_html($submitted) . '</td><td><a href="#" onClick="ue_merge_submit(' . "'" . esc_html($row->ChapterName) . "','" . esc_html($row->UnitType) . "','" . esc_html($row->UnitNumberInt) . "','" . esc_html($row->UnitDesignator) . "'" . ');">Process this unit</a></td></tr>' . "\n";
             $count++;
         }
     }
@@ -127,11 +132,13 @@ function nslodge_ue_merge_unit() {
     $chapter = $_POST['ue_merge_chapter'];
     $unittype = $_POST['ue_merge_unittype'];
     $unitnum = $_POST['ue_merge_unitnum'];
+    $unitdesig = $_POST['ue_merge_unitdesig'];
     $unit_columnlist = [
         "DATE_FORMAT(FROM_UNIXTIME(Submitted), '%b %e, %Y  %l:%i %p') AS Submitted",
         'ChapterName',
         'UnitType',
         'CAST(UnitNumber AS unsigned) AS UnitNumberInt',
+        'UnitDesignator',
         'NumberElected',
         'SubmitterType',
         'ElectionDate',
@@ -159,6 +166,7 @@ function nslodge_ue_merge_unit() {
         'ChapterName',
         'UnitType',
         'CAST(UnitNumber AS unsigned) AS UnitNumberInt',
+        'UnitDesignator',
         'NumberElected',
         'FirstName',
         'MiddleName',
@@ -181,9 +189,9 @@ function nslodge_ue_merge_unit() {
 FROM
     wp_oa_ue_units
 WHERE
-    ChapterName = %s AND UnitType = %s AND CAST(UnitNumber AS unsigned) = %d
+    ChapterName = %s AND UnitType = %s AND CAST(UnitNumber AS unsigned) = %d AND UnitDesignator = %s
 ORDER BY Submitted
-", $chapter, $unittype, $unitnum));
+", $chapter, $unittype, $unitnum, $unitdesig));
     if (!isset($unit_results)) { $output .= esc_html($wpdb->last_error); return $output; }
     $candidate_results = $wpdb->get_results($wpdb->prepare("SELECT Submitted AS submit_time, " . join(', ',$candidate_columnlist) . "
 FROM
@@ -221,6 +229,7 @@ ORDER BY BSAMemberID, Submitted
 <input type="hidden" id="ue_merge_chapter" name="ue_merge_chapter" value="' . esc_html($chapter) . '">
 <input type="hidden" id="ue_merge_unittype" name="ue_merge_unittype" value="' . esc_html($unittype) . '">
 <input type="hidden" id="ue_merge_unitnum" name="ue_merge_unitnum" value="' . esc_html($unitnum) . '">
+<input type="hidden" id="ue_merge_unitdesig" name="ue_merge_unitdesig" value="' . esc_html($unitdesig) . '">
 ';
     $candidates = [];
     foreach ($candidate_results as $row) {
@@ -263,6 +272,7 @@ function nslodge_ue_merge_candidates() {
     $chapter = $_POST['ue_merge_chapter'];
     $unittype = $_POST['ue_merge_unittype'];
     $unitnum = $_POST['ue_merge_unitnum'];
+    $unitdesig = $_POST['ue_merge_unitdesig'];
     $keys = array_keys($_POST);
     $output = "";
     foreach ($keys as $key) {
@@ -274,16 +284,16 @@ function nslodge_ue_merge_candidates() {
                 $output .= '<span style="color: red;">BSAID ' . esc_html($bsaid) . ' failed, record already exists. Move unit back to Processing first<br>';
             }
             else {
-                $output .= "Chapter $chapter $unittype $unitnum BSAID: $bsaid - rowid: $submitted<br>";
+                $output .= esc_html("Chapter $chapter " . ns_format_unit($unittype, $unitnum, $unitdesig) . " BSAID: $bsaid - rowid: $submitted") . "<br>";
                 $theresult = $wpdb->query($wpdb->prepare("INSERT INTO wp_oa_ue_candidates_merged (
-`Submitted`, `SubmitterType`, `ElectionDate`, `ChapterName`, `UnitType`, `UnitNumber`,
+`Submitted`, `SubmitterType`, `ElectionDate`, `ChapterName`, `UnitType`, `UnitNumber`, `UnitDesignator`,
 `NumberElected`, `FirstName`, `MiddleName`, `LastName`, `Suffix`, `BSAMemberID`,
 `Gender`, `HomeEmail`, `ParentEmail`, `HomePhone`, `AddressLine1`, `AddressLine2`, `City`, `State`,
 `ZipCode`, `DateOfBirth`, `SubmitterName`)
-SELECT `Submitted`, `SubmitterType`, `ElectionDate`, `ChapterName`, `UnitType`, `UnitNumber`,
+SELECT `Submitted`, `SubmitterType`, `ElectionDate`, `ChapterName`, `UnitType`, `UnitNumber`, `UnitDesignator`,
 `NumberElected`, `FirstName`, `MiddleName`, `LastName`, `Suffix`, `BSAMemberID`, `Gender`, `HomeEmail`,
 `ParentEmail`, `HomePhone`, `AddressLine1`, `AddressLine2`, `City`, `State`, `ZipCode`, `DateOfBirth`, `SubmitterName`
-FROM wp_oa_ue_candidates WHERE ChapterName = %s AND UnitType = %s AND CAST(UnitNumber AS unsigned) = %d AND BSAMemberID = %d AND Submitted = %s", $chapter, $unittype, $unitnum, $bsaid, $submitted));
+FROM wp_oa_ue_candidates WHERE ChapterName = %s AND UnitType = %s AND CAST(UnitNumber AS unsigned) = %d AND UnitDesignator = %s AND BSAMemberID = %d AND Submitted = %s", $chapter, $unittype, $unitnum, $unitdesig, $bsaid, $submitted));
                 if (false === $theresult) { $output .= "SQL failed: " . $wpdb->last_error . "<br>"; };
             }
         }
@@ -296,7 +306,7 @@ FROM wp_oa_ue_candidates WHERE ChapterName = %s AND UnitType = %s AND CAST(UnitN
 function nslodge_ue_list_unexported() {
     global $wpdb;
     $output = "<h4>Units available to export:</h4>\n";
-    $result = $wpdb->get_results("SELECT ChapterName, UnitType, UnitNumber, COUNT(*) AS NumCandidates, MAX(RowExported) AS AlreadyExported FROM wp_oa_ue_candidates_merged GROUP BY ChapterName, UnitType, UnitNumber ORDER BY ChapterName, UnitType, UnitNumber");
+    $result = $wpdb->get_results("SELECT ChapterName, UnitType, UnitNumber, UnitDesignator, COUNT(*) AS NumCandidates, MAX(RowExported) AS AlreadyExported FROM wp_oa_ue_candidates_merged GROUP BY ChapterName, UnitType, UnitNumber, UnitDesignator ORDER BY ChapterName, UnitType, UnitNumber, UnitDesignator");
     if (!isset($result)) {
         $output .= "<p>Nothing available to export</p>\n";
         return $output;
@@ -310,13 +320,15 @@ function nslodge_ue_list_unexported() {
 <input type="hidden" id="ue_merge_chapter" name="ue_merge_chapter" value="">
 <input type="hidden" id="ue_merge_unittype" name="ue_merge_unittype" value="">
 <input type="hidden" id="ue_merge_unitnum" name="ue_merge_unitnum" value="">
+<input desig="hidden" id="ue_merge_unitdesig" name="ue_merge_unitdesig" value="">
 </form>
 </div>
 <script type="text/javascript"><!--
-function ue_merge_submit(chapter, unittype, unitnum) {
+function ue_merge_submit(chapter, unittype, unitnum, unitdesig) {
   document.getElementById("ue_merge_chapter").value = chapter;
   document.getElementById("ue_merge_unittype").value = unittype;
   document.getElementById("ue_merge_unitnum").value = unitnum;
+  document.getElementById("ue_merge_unitdesig").value = unitdesig;
   document.getElementById("ue_merge_form").submit();
   return true;
 }
@@ -348,15 +360,15 @@ function ue_select_all(reallyall) {
     $output .= '<table border="1">' . "\n";
     $output .= "<tr><th>Select<br>Unit</th><th>Already<br>Exported</th><th>Chapter Name</th><th>Unit</th><th>Candidates</th><th>Extra Stuff</th></tr>\n";
     foreach ($result as $row) {
-        $row_token = str_replace(" ", "_", $row->ChapterName) . '-' . $row->UnitType . '-' . $row->UnitNumber;
+        $row_token = str_replace(" ", "_", $row->ChapterName) . '-' . $row->UnitType . '-' . $row->UnitNumber . '-' . $row->UnitDesignator;
         $output .= '<td style="text-align: center;"><input type="hidden" id="unit-' . esc_html($row_token) . '" name="unit-' . esc_html($row_token) . '" value="1"><input type="checkbox" id="select-' . esc_html($row_token) . '" name="select-' . esc_html($row_token) . '"></td>';
         $selected = "";
         if ($row->AlreadyExported > 0) {
             $selected = ' checked="checked"';
         }
         $output .= '<td style="text-align: center;"><input type="checkbox" disabled="disabled" id="exported-' . esc_html($row_token) . '" name="exported-' . esc_html($row_token) .  '"' . $selected . '></td>';
-        $output .= '<td>' . esc_html($row->ChapterName) . '</td><td style="text-align: right;">' . esc_html($row->UnitType) . ' ' . esc_html($row->UnitNumber) . '</td><td style="text-align: center;">' . esc_html($row->NumCandidates) . '</td>';
-        $output .= '<td><a href="#" onClick="ue_merge_submit(' . "'" . esc_html($row->ChapterName) . "','" . esc_html($row->UnitType) . "','" . esc_html($row->UnitNumber) . "'" . ');">View reports</a></td>';
+        $output .= '<td>' . esc_html($row->ChapterName) . '</td><td style="text-align: right;">' . esc_html(ns_format_unit($row->UnitType, $row->UnitNumber, $row->UnitDesignator)) . '</td><td style="text-align: center;">' . esc_html($row->NumCandidates) . '</td>';
+        $output .= '<td><a href="#" onClick="ue_merge_submit(' . "'" . esc_html($row->ChapterName) . "','" . esc_html($row->UnitType) . "','" . esc_html($row->UnitNumber) . "','" . esc_html($row->UnitDesignator) . "'" . ');">View reports</a></td>';
         $output .= "</tr>\n";
     }
     $output .= "</table>\n";
@@ -388,12 +400,13 @@ function nslodge_ue_do_cvs_export() {
     header('Content-Transfer-Encoding: binary', true);
     header('Expires: 0');
     header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
-    echo '"Election Date","Chapter","Unit Type","Unit Number","First Name","Middle Name","Last Name","Suffix","BSA ID","Gender","Home Email Address","Parent Email Address","Home Phone","Home Street 1","Home Street 2","Home City","Home State","Home Zip Code","Date Of Birth"' . "\n";
+    echo '"Election Date","Chapter","Unit Type","Unit Number","Unit Designation","First Name","Middle Name","Last Name","Suffix","BSA ID","Gender","Home Email Address","Parent Email Address","Home Phone","Home Street 1","Home Street 2","Home City","Home State","Home Zip Code","Date Of Birth"' . "\n";
     $candidate_columnlist = [
         'ElectionDate',
         'SelectorName',
         'UnitType',
         'UnitNumber',
+        'UnitDesignator',
         'FirstName',
         'MiddleName',
         'LastName',
@@ -413,14 +426,15 @@ function nslodge_ue_do_cvs_export() {
     $keys = array_keys($_POST);
     foreach ($keys as $key) {
         $matches = [];
-        if (preg_match('/^select-([^-]+)-([^-]+)-(\d+)$/', $key, $matches)) {
+        if (preg_match('/^select-([^-]+)-([^-]+)-(\d+)-([^-]+)$/', $key, $matches)) {
             $ChapterName = str_replace("_", " ", $matches[1]);
             $UnitType = $matches[2];
             $UnitNumber = $matches[3];
+            $UnitDesignator = $matches[4];
             $unit_rows = $wpdb->get_results($wpdb->prepare("SELECT `" . join('`, `',$candidate_columnlist) .
                 "` FROM wp_oa_ue_candidates_merged AS m
                    LEFT JOIN wp_oa_chapters AS c ON m.ChapterName = c.ChapterName
-                   WHERE m.ChapterName = %s AND UnitType = %s AND UnitNumber = %d", $ChapterName, $UnitType, $UnitNumber));
+                   WHERE m.ChapterName = %s AND UnitType = %s AND UnitNumber = %d AND UnitDesignator = %s", $ChapterName, $UnitType, $UnitNumber, $UnitDesignator));
             foreach ($unit_rows as $row) {
                 $comma = "";
                 foreach ($candidate_columnlist as $column) {
@@ -456,7 +470,7 @@ function nslodge_ue_do_cvs_export() {
                 echo "\n";
             }
             if (isset($_POST['markexported'])) {
-                $wpdb->query($wpdb->prepare('UPDATE wp_oa_ue_candidates_merged SET RowExported = 1 WHERE ChapterName = %s AND UnitNumber = %d', $ChapterName, $UnitNumber));
+                $wpdb->query($wpdb->prepare('UPDATE wp_oa_ue_candidates_merged SET RowExported = 1 WHERE ChapterName = %s AND UnitNumber = %d AND UnitDesignator = %s', $ChapterName, $UnitNumber, $UnitDesignator));
             }
         }
     }
@@ -470,12 +484,13 @@ function nslodge_ue_do_clear_exports() {
     $keys = array_keys($_POST);
     foreach ($keys as $key) {
         $matches = [];
-        if (preg_match('/^select-([^-]+)-([^-]+)-(\d+)$/', $key, $matches)) {
+        if (preg_match('/^select-([^-]+)-([^-]+)-(\d+)-([^-]+)$/', $key, $matches)) {
             $ChapterName = str_replace("_", " ", $matches[1]);
             $UnitType = $matches[2];
             $UnitNumber = $matches[3];
-            $wpdb->query($wpdb->prepare("UPDATE wp_oa_ue_candidates_merged SET RowExported = 0 WHERE ChapterName = %s AND UnitType = %s AND UnitNumber = %d", $ChapterName, $UnitType, $UnitNumber));
-            $output .= "Chapter $ChapterName $UnitType $UnitNumber set back to unexported.<br><br>\n";
+            $UnitDesignator = $matches[4];
+            $wpdb->query($wpdb->prepare("UPDATE wp_oa_ue_candidates_merged SET RowExported = 0 WHERE ChapterName = %s AND UnitType = %s AND UnitNumber = %d AND UnitDesignator = %s", $ChapterName, $UnitType, $UnitNumber, $UnitDesignator));
+            $output .= "Chapter $ChapterName $UnitType $UnitNumber $UnitDesignator set back to unexported.<br><br>\n";
         }
     }
     $output .= '<a href="' . $permalink . '">Back to export queue</a>' . "\n";
@@ -489,12 +504,13 @@ function nslodge_ue_do_move_to_processing() {
     $keys = array_keys($_POST);
     foreach ($keys as $key) {
         $matches = [];
-        if (preg_match('/^select-([^-]+)-([^-]+)-(\d+)$/', $key, $matches)) {
+        if (preg_match('/^select-([^-]+)-([^-]+)-(\d+)-([^-]+)$/', $key, $matches)) {
             $ChapterName = str_replace("_", " ", $matches[1]);
             $UnitType = $matches[2];
             $UnitNumber = $matches[3];
-            $wpdb->query($wpdb->prepare("DELETE FROM wp_oa_ue_candidates_merged WHERE ChapterName = %s AND UnitType = %s AND UnitNumber = %d", $ChapterName, $UnitType, $UnitNumber));
-            $output .= "Chapter $ChapterName $UnitType $UnitNumber sent back to processing queue.<br><br>\n";
+            $UnitDesignator = $matches[4];
+            $wpdb->query($wpdb->prepare("DELETE FROM wp_oa_ue_candidates_merged WHERE ChapterName = %s AND UnitType = %s AND UnitNumber = %d AND UnitDesignator = %s", $ChapterName, $UnitType, $UnitNumber, $UnitDesignator));
+            $output .= "Chapter $ChapterName $UnitType $UnitNumber $UnitDesignator sent back to processing queue.<br><br>\n";
         }
     }
     $output .= '<a href="' . $permalink . '">Back to export queue</a>' . "\n";
