@@ -46,10 +46,14 @@ function nslodge_ue_getelections($chapter) {
             $start = $this_event->start;
             preg_match("/[Cc]hapter ([AaBbCcDdEe])/",$title,$matches);
             $this_chapter = $matches[1];
-            preg_match("/([Tt]roop|[Cc]rew|[Ss]hip) (\d+)/",$title,$matches);
-            $unit_type = $matches[1];
+            preg_match("/([Tt]roop|[Cc]rew|[Ss]hip) (\d+)( ?[BbGg])?/",$title,$matches);
+            $unit_type = ucfirst($matches[1]);
             $unit_num = $matches[2];
+            $unit_desig = strtoupper(trim($matches[3]));
             $unit = "$unit_type $unit_num";
+            if ($unit_desig) {
+                $unit .= " " . $unit_desig;
+            }
             if (!array_key_exists($this_chapter, $elecscheds)) {
                 $elecscheds[$this_chapter] = [];
             }
@@ -63,21 +67,21 @@ function nslodge_ue_getelections($chapter) {
 function nslodge_ue_getschedreqs($chapter) {
     global $wpdb;
     if ($chapter == 'all') {
-    $results = $wpdb->get_results($wpdb->prepare("SELECT Chapter, UnitType, UnitNum, ReqDate, Priority FROM (
-SELECT ChapterName AS Chapter, UnitType, UnitNum, `e-date-1` AS ReqDate, '1' AS Priority FROM wp_oa_ue_schedules
+    $results = $wpdb->get_results($wpdb->prepare("SELECT Chapter, UnitType, UnitNum, UnitDesignator, ReqDate, Priority FROM (
+SELECT ChapterName AS Chapter, UnitType, UnitNum, UnitDesignator, `e-date-1` AS ReqDate, '1' AS Priority FROM wp_oa_ue_schedules
 UNION
-SELECT ChapterName AS Chapter, UnitType, UnitNum, `e-date-2` AS ReqDate, '2' AS Priority FROM wp_oa_ue_schedules
+SELECT ChapterName AS Chapter, UnitType, UnitNum, UnitDesignator, `e-date-2` AS ReqDate, '2' AS Priority FROM wp_oa_ue_schedules
 UNION
-SELECT ChapterName AS Chapter, UnitType, UnitNum, `e-date-3` AS ReqDate, '3' AS Priority FROM wp_oa_ue_schedules
+SELECT ChapterName AS Chapter, UnitType, UnitNum, UnitDesignator, `e-date-3` AS ReqDate, '3' AS Priority FROM wp_oa_ue_schedules
 ) AS sched
 ORDER BY ReqDate, Priority", array($chapter)));
     } else {
-    $results = $wpdb->get_results($wpdb->prepare("SELECT Chapter, UnitType, UnitNum, ReqDate, Priority FROM (
-SELECT ChapterName AS Chapter, UnitType, UnitNum, `e-date-1` AS ReqDate, '1' AS Priority FROM wp_oa_ue_schedules
+    $results = $wpdb->get_results($wpdb->prepare("SELECT Chapter, UnitType, UnitNum, UnitDesignator, ReqDate, Priority FROM (
+SELECT ChapterName AS Chapter, UnitType, UnitNum, UnitDesignator, `e-date-1` AS ReqDate, '1' AS Priority FROM wp_oa_ue_schedules
 UNION
-SELECT ChapterName AS Chapter, UnitType, UnitNum, `e-date-2` AS ReqDate, '2' AS Priority FROM wp_oa_ue_schedules
+SELECT ChapterName AS Chapter, UnitType, UnitNum, UnitDesignator, `e-date-2` AS ReqDate, '2' AS Priority FROM wp_oa_ue_schedules
 UNION
-SELECT ChapterName AS Chapter, UnitType, UnitNum, `e-date-3` AS ReqDate, '3' AS Priority FROM wp_oa_ue_schedules
+SELECT ChapterName AS Chapter, UnitType, UnitNum, UnitDesignator, `e-date-3` AS ReqDate, '3' AS Priority FROM wp_oa_ue_schedules
 ) AS sched
 WHERE ChapterName=%s
 ORDER BY ReqDate, Priority", array("Chapter $chapter")));
@@ -86,6 +90,9 @@ ORDER BY ReqDate, Priority", array("Chapter $chapter")));
 
     foreach ($results as $row) {
         $unit = $row->UnitType . " " . $row->UnitNum;
+        if ($row->UnitDesignator) {
+            $unit .= " " . substr($row->UnitDesignator, 0, 1);
+        }
         $schedreqs[$row->Chapter][$unit][$row->Priority] = $row->ReqDate;
     }
     return $schedreqs;
@@ -103,30 +110,30 @@ function nslodge_ue_schedreqs( $attrs ) {
     global $wpdb;
     if ($chapter == 'all') {
     $results = $wpdb->get_results("
-SELECT Chapter, sched.UnitType, sched.UnitNum, ReqDate, Priority, COUNT(rpts.UnitNumber) as Reports FROM (
-SELECT ChapterName AS Chapter, UnitType, UnitNum, `e-date-1` AS ReqDate, '1' AS Priority FROM wp_oa_ue_schedules
+SELECT Chapter, sched.UnitType, sched.UnitNum, sched.UnitDesignator, ReqDate, Priority, COUNT(rpts.UnitNumber) as Reports FROM (
+SELECT ChapterName AS Chapter, UnitType, UnitNum, UnitDesignator, `e-date-1` AS ReqDate, '1' AS Priority FROM wp_oa_ue_schedules
 UNION
-SELECT ChapterName AS Chapter, UnitType, UnitNum, `e-date-2` AS ReqDate, '2' AS Priority FROM wp_oa_ue_schedules
+SELECT ChapterName AS Chapter, UnitType, UnitNum, UnitDesignator, `e-date-2` AS ReqDate, '2' AS Priority FROM wp_oa_ue_schedules
 UNION
-SELECT ChapterName AS Chapter, UnitType, UnitNum, `e-date-3` AS ReqDate, '3' AS Priority FROM wp_oa_ue_schedules
+SELECT ChapterName AS Chapter, UnitType, UnitNum, UnitDesignator, `e-date-3` AS ReqDate, '3' AS Priority FROM wp_oa_ue_schedules
 ) AS sched
 LEFT JOIN wp_oa_chapters AS chp ON BINARY sched.Chapter = BINARY chp.SelectorName
-LEFT JOIN wp_oa_ue_units AS rpts ON BINARY chp.ChapterName = BINARY rpts.ChapterName AND BINARY sched.UnitType = BINARY rpts.UnitType AND BINARY sched.UnitNum = BINARY rpts.UnitNumber
-GROUP BY Chapter, UnitType, UnitNum, Priority
+LEFT JOIN wp_oa_ue_units AS rpts ON BINARY chp.ChapterName = BINARY rpts.ChapterName AND BINARY sched.UnitType = BINARY rpts.UnitType AND BINARY sched.UnitNum = BINARY rpts.UnitNumber AND BINARY sched.UnitDesignator = BINARY rpts.UnitDesignator
+GROUP BY Chapter, UnitType, UnitNum, UnitDesignator, Priority
 ORDER BY ReqDate, Priority");
     } else {
     $results = $wpdb->get_results($wpdb->prepare("
-SELECT Chapter, sched.UnitType, sched.UnitNum, ReqDate, Priority, COUNT(rpts.UnitNumber) as Reports FROM (
-SELECT ChapterName AS Chapter, UnitType, UnitNum, `e-date-1` AS ReqDate, '1' AS Priority FROM wp_oa_ue_schedules
+SELECT Chapter, sched.UnitType, sched.UnitNum, sched.UnitDesignator, ReqDate, Priority, COUNT(rpts.UnitNumber) as Reports FROM (
+SELECT ChapterName AS Chapter, UnitType, UnitNum, UnitDesignator, `e-date-1` AS ReqDate, '1' AS Priority FROM wp_oa_ue_schedules
 UNION
-SELECT ChapterName AS Chapter, UnitType, UnitNum, `e-date-2` AS ReqDate, '2' AS Priority FROM wp_oa_ue_schedules
+SELECT ChapterName AS Chapter, UnitType, UnitNum, UnitDesignator, `e-date-2` AS ReqDate, '2' AS Priority FROM wp_oa_ue_schedules
 UNION
-SELECT ChapterName AS Chapter, UnitType, UnitNum, `e-date-3` AS ReqDate, '3' AS Priority FROM wp_oa_ue_schedules
+SELECT ChapterName AS Chapter, UnitType, UnitNum, UnitDesignator, `e-date-3` AS ReqDate, '3' AS Priority FROM wp_oa_ue_schedules
 ) AS sched
 LEFT JOIN wp_oa_chapters AS chp ON BINARY sched.Chapter = BINARY chp.SelectorName
-LEFT JOIN wp_oa_ue_units AS rpts ON BINARY chp.ChapterName = BINARY rpts.ChapterName AND BINARY sched.UnitType = BINARY rpts.UnitType AND BINARY sched.UnitNum = BINARY rpts.UnitNumber
+LEFT JOIN wp_oa_ue_units AS rpts ON BINARY chp.ChapterName = BINARY rpts.ChapterName AND BINARY sched.UnitType = BINARY rpts.UnitType AND BINARY sched.UnitNum = BINARY rpts.UnitNumber AND BINARY sched.UnitDesignator = BINARY rpts.UnitDesignator
 WHERE Chapter=%d
-GROUP BY Chapter, UnitType, UnitNum, Priority
+GROUP BY Chapter, UnitType, UnitNum, UnitDesignator, Priority
 ORDER BY ReqDate, Priority", array($chapter)));
     }
 
@@ -137,12 +144,17 @@ ORDER BY ReqDate, Priority", array($chapter)));
     $output .= "<table border=1><tr>";
     if ($chapter == 'all') { $output .= "<th>Chapter</th>"; }
     $output .= "<th>Unit</th><th>Requested Date</th><th>Unit's Priority</th></tr>\n";
+
     foreach ($results as $row) {
         if ( $row->Reports == 0 ) {
+            $unit = $row->UnitType . " " . $row->UnitNum;
+            if ($row->UnitDesignator) {
+                $unit .= . " " . substr($row->UnitDesignator, 0, 1);
+            }
             if ( !(array_key_exists($row->Chapter, $elecscheds)) ||
                ( (array_key_exists($row->Chapter, $elecscheds) ) &&
                  (! array_key_exists($row->UnitType, $elecscheds[$row->Chapter])) &&
-                 (! array_key_exists($row->UnitNum, $elecscheds[$row->Chapter][$row->UnitType]))
+                 (! array_key_exists($row->UnitNum, $elecscheds[$row->Chapter][$unit]))
                )) {
                 $color = "";
                 if (strtotime($row->ReqDate) < time()) { $color = ' style="color: red;"'; }
