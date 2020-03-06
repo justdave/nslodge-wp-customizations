@@ -149,7 +149,7 @@ ORDER BY ReqDate, Priority", array($chapter)));
         if ( $row->Reports == 0 ) {
             $unit = $row->UnitType . " " . $row->UnitNum;
             if ($row->UnitDesignator) {
-                $unit .= . " " . substr($row->UnitDesignator, 0, 1);
+                $unit .= " " . substr($row->UnitDesignator, 0, 1);
             }
             if ( !(array_key_exists($row->Chapter, $elecscheds)) ||
                ( (array_key_exists($row->Chapter, $elecscheds) ) &&
@@ -160,7 +160,7 @@ ORDER BY ReqDate, Priority", array($chapter)));
                 if (strtotime($row->ReqDate) < time()) { $color = ' style="color: red;"'; }
                 $output .= "<tr>";
                 if ($chapter == 'all') { $output .= "<td>" . htmlspecialchars($row->Chapter) . "</td>"; }
-                $output .= "<td>" . htmlspecialchars($row->UnitType) . " " . htmlspecialchars($row->UnitNum) . "</td><td$color>" . htmlspecialchars($row->ReqDate) . "</td><td>" . htmlspecialchars($row->Priority) . "</td></tr>\n";
+                $output .= "<td>" . htmlspecialchars($unit) . "</td><td$color>" . htmlspecialchars($row->ReqDate) . "</td><td>" . htmlspecialchars($row->Priority) . "</td></tr>\n";
             }
         }
     }
