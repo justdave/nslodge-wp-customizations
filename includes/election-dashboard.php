@@ -475,7 +475,8 @@ function nslodge_ue_dashboard_chapter() {
         ( in_array( 'administrator',    (array) $user->roles ) )) {
         $election_committee = 1;
     }
-    if ( in_array( 'administrator',    (array) $user->roles ) ) {
+    if (( in_array( 'administrator',    (array) $user->roles ) ) ||
+        ( in_array( 'process_nominations', (array) $user->roles ) )) {
         $election_admin = 1;
     }
     ob_start();
@@ -586,7 +587,8 @@ function nslodge_ue_dashboard_list_chapters() {
         ( in_array( 'administrator',    (array) $user->roles ) )) {
         $election_committee = 1;
     }
-    if ( in_array( 'administrator',    (array) $user->roles ) ) {
+    if (( in_array( 'administrator',    (array) $user->roles ) ) ||
+        ( in_array( 'process_nominations', (array) $user->roles ) )) {
         $election_admin = 1;
     }
     ?>
