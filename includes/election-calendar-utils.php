@@ -118,7 +118,7 @@ UNION
 SELECT ChapterName AS Chapter, UnitType, UnitNum, UnitDesignator, `e-date-3` AS ReqDate, '3' AS Priority FROM wp_oa_ue_schedules
 ) AS sched
 LEFT JOIN wp_oa_chapters AS chp ON BINARY sched.Chapter = BINARY chp.SelectorName
-LEFT JOIN wp_oa_ue_units AS rpts ON BINARY chp.ChapterName = BINARY rpts.ChapterName AND BINARY sched.UnitType = BINARY rpts.UnitType AND BINARY sched.UnitNum = BINARY rpts.UnitNumber AND BINARY sched.UnitDesignator = BINARY rpts.UnitDesignator
+LEFT JOIN wp_oa_ue_units AS rpts ON BINARY sched.Chapter = BINARY rpts.ChapterName AND BINARY sched.UnitType = BINARY rpts.UnitType AND BINARY sched.UnitNum = BINARY rpts.UnitNumber AND BINARY sched.UnitDesignator = BINARY rpts.UnitDesignator
 GROUP BY Chapter, UnitType, UnitNum, UnitDesignator, Priority
 ORDER BY ReqDate, Priority");
     } else {
@@ -131,7 +131,7 @@ UNION
 SELECT ChapterName AS Chapter, UnitType, UnitNum, UnitDesignator, `e-date-3` AS ReqDate, '3' AS Priority FROM wp_oa_ue_schedules
 ) AS sched
 LEFT JOIN wp_oa_chapters AS chp ON BINARY sched.Chapter = BINARY chp.SelectorName
-LEFT JOIN wp_oa_ue_units AS rpts ON BINARY chp.ChapterName = BINARY rpts.ChapterName AND BINARY sched.UnitType = BINARY rpts.UnitType AND BINARY sched.UnitNum = BINARY rpts.UnitNumber AND BINARY sched.UnitDesignator = BINARY rpts.UnitDesignator
+LEFT JOIN wp_oa_ue_units AS rpts ON BINARY sched.Chapter = BINARY rpts.ChapterName AND BINARY sched.UnitType = BINARY rpts.UnitType AND BINARY sched.UnitNum = BINARY rpts.UnitNumber AND BINARY sched.UnitDesignator = BINARY rpts.UnitDesignator
 WHERE Chapter=%d
 GROUP BY Chapter, UnitType, UnitNum, UnitDesignator, Priority
 ORDER BY ReqDate, Priority", array($chapter)));
