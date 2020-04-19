@@ -28,6 +28,7 @@ function nslodge_ue_merge( $attrs ) {
     if ($action == "list_unmerged") { return nslodge_ue_list_unmerged(); }
     if ($action == "merge_unit") { return nslodge_ue_merge_unit(); }
     if ($action == "merge_candidates") { return nslodge_ue_merge_candidates(); }
+    if ($action == "delete_report") { return nslodge_ue_delete_report(); }
     return "<h4>Unknown action: " . htmlspecialchars($action) . "</h4>\n";
 }
 add_shortcode( 'ue_candidate_merge', 'nslodge_ue_merge' );
@@ -120,6 +121,35 @@ function ue_merge_submit(chapter, unittype, unitnum, unitdesig) {
     }
     $output .= "</table>\n";
     $output .= "<p>Number of unprocessed units remaining: $count</p>\n";
+    $output .= "<h4>Reports with zero candidates:</h4>\n";
+    $output .= "<table border=1><tr><th>Chapter</th><th>Unit</th><th>Number of<br>Reports<br>Submitted</th><th>Candidates<br>Reported<br>on Form</th><th>Candidates<br>with Scout Data<br>Submitted</th><th>Action</th></tr>\n";
+    $count = 0;
+    foreach ($results as $row) {
+        $link = $permalink . "?ue_merge_action=merge_unit&unit=" . $row->ChapterName . "|" . $row->UnitType . "|" . $row->UnitNumberInt . "|" . $row->UnitDesignator;
+        $style = "";
+        $submitted = $row->NumCandidatesSubmitted;
+        $reported = $row->NumCandidatesReported;
+        if (!($submitted)) { $submitted = 0; }
+        if ($reported == 0) {
+            $output .= "<tr$style><td>" . esc_html($row->ChapterName) . "</td><td>" . esc_html(ns_format_unit($row->UnitType, $row->UnitNumberInt, $row->UnitDesignator)) . '</td><td>' . esc_html($row->NumReports) . '</td><td>' . esc_html($reported) . '</td><td>' . esc_html($submitted) . '</td><td><a href="#" onClick="ue_merge_submit(' . "'" . esc_html($row->ChapterName) . "','" . esc_html($row->UnitType) . "','" . esc_html($row->UnitNumberInt) . "','" . esc_html($row->UnitDesignator) . "'" . ');">Process this unit</a></td></tr>' . "\n";
+            $count++;
+        }
+    }
+    $output .= "</table>\n";
+    $output .= "<p>Number of no-election units reported: $count</p>\n";
+    return $output;
+}
+
+function nslodge_ue_delete_report() {
+    global $wpdb, $post;
+    if (!isset($_POST['submission_id'])) {
+        return "<h4>Error: no unit specified</h4>\n";
+    }
+    $submission_id = $_POST['submission_id'];
+    $wpdb->query($wpdb->prepare("DELETE FROM wp_cf7dbplugin_submits WHERE Submitted = %s", $submission_id));
+    $permalink = get_permalink($post->ID);
+    $output = "<h4>Unit Report Deleted</h4>\n";
+    $output .= '<a href="' . esc_url($permalink) . '">Back to unit list</a></p>';
     return $output;
 }
 
@@ -212,6 +242,7 @@ ORDER BY BSAMemberID, Submitted
         if ($column == "DATE_FORMAT(FROM_UNIXTIME(Submitted), '%b %e, %Y  %l:%i %p') AS Submitted") { $column = 'Submitted'; }
         $output .= "<th>" . esc_html($column) . "</th>";
     } 
+    $output .= "<th>Actions</th></tr>";
     foreach ($unit_results as $row) {
         $output .= "<tr>";
         foreach ($unit_columnlist as $column) {
@@ -219,6 +250,12 @@ ORDER BY BSAMemberID, Submitted
             if ($column == "DATE_FORMAT(FROM_UNIXTIME(Submitted), '%b %e, %Y  %l:%i %p') AS Submitted") { $column = 'Submitted'; }
             $output .= "<td>" . esc_html($row->$column) . "</td>";
         }
+        $output .= '<td>
+        <form method="post">
+        <input type="hidden" name="ue_merge_action" value="delete_report">
+        <input type="hidden" name="submission_id" value="' . esc_html($row->Submitted) . '">
+        <input type="submit" name="submit" value="Delete this report">
+        </form></td>';
         $output .= "</tr>\n";
     }
     $output .= "</table></div>\n";
