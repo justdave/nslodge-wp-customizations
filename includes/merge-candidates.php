@@ -146,9 +146,10 @@ function nslodge_ue_delete_report() {
         return "<h4>Error: no unit specified</h4>\n";
     }
     $submission_id = $_POST['submission_id'];
-    $wpdb->query($wpdb->prepare("DELETE FROM wp_cf7dbplugin_submits WHERE Submitted = %s", $submission_id));
+    $wpdb->query($wpdb->prepare("DELETE FROM wp_cf7dbplugin_submits WHERE submit_time = %s", $submission_id));
     $permalink = get_permalink($post->ID);
     $output = "<h4>Unit Report Deleted</h4>\n";
+    $output .= "<p>Submission ID: " . esc_html($submission_id) . "</p>";
     $output .= '<a href="' . esc_url($permalink) . '">Back to unit list</a></p>';
     return $output;
 }
@@ -215,7 +216,7 @@ function nslodge_ue_merge_unit() {
         'DateOfBirth',
         'SubmitterName'
     ];
-    $unit_results = $wpdb->get_results($wpdb->prepare("SELECT " . join(', ',$unit_columnlist) . "
+    $unit_results = $wpdb->get_results($wpdb->prepare("SELECT Submitted AS submit_time, " . join(', ',$unit_columnlist) . "
 FROM
     wp_oa_ue_units
 WHERE
@@ -253,7 +254,7 @@ ORDER BY BSAMemberID, Submitted
         $output .= '<td>
         <form method="post">
         <input type="hidden" name="ue_merge_action" value="delete_report">
-        <input type="hidden" name="submission_id" value="' . esc_html($row->Submitted) . '">
+        <input type="hidden" name="submission_id" value="' . esc_html($row->submit_time) . '">
         <input type="submit" name="submit" value="Delete this report">
         </form></td>';
         $output .= "</tr>\n";
