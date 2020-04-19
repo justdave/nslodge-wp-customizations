@@ -227,9 +227,9 @@ ORDER BY Submitted
 FROM
     wp_oa_ue_candidates
 WHERE
-    ChapterName = %s AND UnitType = %s AND CAST(UnitNumber AS unsigned) = %d
+    ChapterName = %s AND UnitType = %s AND CAST(UnitNumber AS unsigned) = %d AND UnitDesignator = %s
 ORDER BY BSAMemberID, Submitted
-", $chapter, $unittype, $unitnum));
+", $chapter, $unittype, $unitnum, $unitdesig));
     if (!isset($candidate_results)) { $output .= esc_html($wpdb->last_error); return $output; }
 
     $output .= "<h2>" . htmlspecialchars($chapter) . " - " . htmlspecialchars($unittype) . " " . htmlspecialchars($unitnum) . "</h2>\n";
