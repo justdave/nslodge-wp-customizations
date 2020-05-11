@@ -89,6 +89,7 @@ function nscustom_options()
             $complete = 0;
             $insertrecordcount = 0;
             $updaterecordcount = 0;
+            $deleterecordcount = 0;
             $error_output = "";
             $districts = $wpdb->get_results("SELECT district_name, district_num FROM wp_oa_districts", OBJECT_K);
             $chapters = $wpdb->get_results("SELECT ChapterName, chapter_num FROM wp_oa_chapters", OBJECT_K);
@@ -195,17 +196,87 @@ function nscustom_options()
                     }
                 }
             }
-            $output = ob_get_clean();
-            if (!$output) {
-                ?><div class="error"><p><strong>Mysteriously no output?</strong></p></div><?php
-            } else {
-                ?><div class="updated"><p><strong>Read <?php esc_html_e($row->getRowIndex() - 2) ?> records from file.<br>
-                Added <?php esc_html_e($insertrecordcount) ?> new units.<br>
-                Updated <?php esc_html_e($updaterecordcount) ?> existing units.</strong></p>
-            <p>Detail follows:</p>
-                <pre><?php echo $output ?></pre>
-            </div><?php
+
+            #####################
+            # Check for units that no longer exist
+            #####################
+
+            # Get the list of units from the spreadsheet as an array so we can index it
+            $totalRows = $row->getRowIndex();
+            $sheetUnits = $objWorksheet->rangeToArray("B2:F" . $totalRows);
+            $sheetUnitIndex = array();
+            foreach ($sheetUnits as $su) {
+                $sheetUnitIndex[] = $su[0] . ":" . $su[1] . ":" . $su[2] . ":" . $su[3];
             }
+
+            # Grab a list of units from the database
+            $units = $wpdb->get_results("SELECT chapter_num, district_num, unit_type, unit_num, unit_desig FROM wp_oa_units", ARRAY_A);
+            $districts = $wpdb->get_results("SELECT district_num, district_name FROM wp_oa_districts", OBJECT_K);
+            $chapters = $wpdb->get_results("SELECT chapter_num, ChapterName, SelectorName FROM wp_oa_chapters", OBJECT_K);
+            foreach ($units as $unit) {
+                $district_row = $districts[$unit['district_num']];
+                $district_name = $district_row->district_name;
+                $chapter_row = $chapters[$unit['chapter_num']];
+                $chapter_letter = $chapter_row->ChapterName;
+                $chapter_name = $chapter_row->SelectorName;
+                $unit_type = $unit['unit_type'];
+                $unit_num = $unit['unit_num'];
+                $unit_desig = $unit['unit_desig'];
+                $indexkey = $district_name . ":" . $unit_type . ":" . $unit_num . ":" . $unit_desig;
+                if (!in_array($indexkey, $sheetUnitIndex)) {
+                    # if we get here, unit exists in database but not in the spreadsheet
+                    echo "[-] Unit to be removed: $district_name $unit_type $unit_num $unit_desig<br>";
+                    echo "--> Checking for references....<br>";
+                    $refcount = 0;
+                    $tablelist = array(
+                        'wp_oa_ue_candidates_merged',
+                        'wp_oa_ue_adult_nominations',
+                        'wp_oa_ue_adults',
+                        'wp_oa_ue_candidates',
+                        'wp_oa_ue_schedules',
+                        'wp_oa_ue_units',
+                    );
+                    foreach ($tablelist as $table) {
+                        $whereclause = "ChapterName = %s AND UnitType = %s AND ";
+                        if ($table == 'wp_oa_ue_schedules') {
+                            $whereclause .= "UnitNum";
+                        } else {
+                            $whereclause .= "UnitNumber";
+                        }
+                        $whereclause .= "= %s AND UnitDesignator = %s";
+                        $count = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $table WHERE $whereclause",array($chapter_letter, $unit_type, $unit_num, $unit_desig)));
+                        if ($count > 0) {
+                            echo "--> ** found $count record(s) in $table.<br>";
+                            $refcount += $count;
+                        }
+                    }
+                    if ($refcount == 0) {
+                        echo "**> No references found, Removing unit!<br>";
+                        $wpdb->query($wpdb->prepare("DELETE FROM wp_oa_units WHERE district_num = %s AND unit_type = %s AND unit_num = %s AND unit_desig = %s",array($unit['district_num'], $unit_type, $unit_num, $unit_desig)));
+                        $deleterecordcount += 1;
+                    }
+                    else {
+                        echo "--> Not removing unit.<br>";
+                    }
+                }
+            }
+
+            #####################
+            # end of unit removal code
+            #####################
+
+            $output = ob_get_clean();
+            ?><div class="updated"><p><strong>Read <?php esc_html_e($row->getRowIndex() - 2) ?> records from file.<br>
+            Added <?php esc_html_e($insertrecordcount) ?> new units.<br>
+            Updated <?php esc_html_e($updaterecordcount) ?> existing units.<br>
+            Deleted <?php esc_html_e($deleterecordcount) ?> old units.</strong></p>
+            <?php
+            if ($output) {
+                ?><p>Detail follows:</p>
+                <pre><?php echo $output ?></pre>
+                <?php
+            }
+            ?></div><?php
         } else {
             ?><div class="error"><p><strong>Invalid file upload.</strong> Not an XLSX file.</p></div><?php
         }
