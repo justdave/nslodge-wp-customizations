@@ -464,7 +464,7 @@ function nslodge_ue_do_cvs_export() {
     $keys = array_keys($_POST);
     foreach ($keys as $key) {
         $matches = [];
-        if (preg_match('/^select-([^-]+)-([^-]+)-(\d+)-([^-]+)$/', $key, $matches)) {
+        if (preg_match('/^select-([^-]+)-([^-]+)-(\d+)-([^-]*)$/', $key, $matches)) {
             $ChapterName = str_replace("_", " ", $matches[1]);
             $UnitType = $matches[2];
             $UnitNumber = $matches[3];
@@ -522,7 +522,7 @@ function nslodge_ue_do_clear_exports() {
     $keys = array_keys($_POST);
     foreach ($keys as $key) {
         $matches = [];
-        if (preg_match('/^select-([^-]+)-([^-]+)-(\d+)-([^-]+)$/', $key, $matches)) {
+        if (preg_match('/^select-([^-]+)-([^-]+)-(\d+)-([^-]*)$/', $key, $matches)) {
             $ChapterName = str_replace("_", " ", $matches[1]);
             $UnitType = $matches[2];
             $UnitNumber = $matches[3];
