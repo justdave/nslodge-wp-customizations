@@ -57,7 +57,8 @@ SELECT
     u.UnitDesignator AS UnitDesignator,
     COUNT(*) AS NumReports,
     MAX(u.NumberElected) AS NumCandidatesReported,
-    m.NumCandidatesSubmitted AS NumCandidatesSubmitted
+    m.NumCandidatesSubmitted AS NumCandidatesSubmitted,
+    u.AdditionalInfo AS AdditionalInfo
 FROM
     wp_oa_ue_units u
     LEFT OUTER JOIN (
@@ -122,7 +123,7 @@ function ue_merge_submit(chapter, unittype, unitnum, unitdesig) {
     $output .= "</table>\n";
     $output .= "<p>Number of unprocessed units remaining: $count</p>\n";
     $output .= "<h4>Reports with zero candidates:</h4>\n";
-    $output .= "<table border=1><tr><th>Chapter</th><th>Unit</th><th>Number of<br>Reports<br>Submitted</th><th>Candidates<br>Reported<br>on Form</th><th>Candidates<br>with Scout Data<br>Submitted</th><th>Action</th></tr>\n";
+    $output .= "<table border=1><tr><th>Chapter</th><th>Unit</th><th>Number of<br>Reports<br>Submitted</th><th>Candidates<br>Reported<br>on Form</th><th>Candidates<br>with Scout Data<br>Submitted</th><th>Reason</th><th>Action</th></tr>\n";
     $count = 0;
     foreach ($results as $row) {
         $link = $permalink . "?ue_merge_action=merge_unit&unit=" . $row->ChapterName . "|" . $row->UnitType . "|" . $row->UnitNumberInt . "|" . $row->UnitDesignator;
@@ -131,7 +132,7 @@ function ue_merge_submit(chapter, unittype, unitnum, unitdesig) {
         $reported = $row->NumCandidatesReported;
         if (!($submitted)) { $submitted = 0; }
         if ($reported == 0) {
-            $output .= "<tr$style><td>" . esc_html($row->ChapterName) . "</td><td>" . esc_html(ns_format_unit($row->UnitType, $row->UnitNumberInt, $row->UnitDesignator)) . '</td><td>' . esc_html($row->NumReports) . '</td><td>' . esc_html($reported) . '</td><td>' . esc_html($submitted) . '</td><td><a href="#" onClick="ue_merge_submit(' . "'" . esc_html($row->ChapterName) . "','" . esc_html($row->UnitType) . "','" . esc_html($row->UnitNumberInt) . "','" . esc_html($row->UnitDesignator) . "'" . ');">Process this unit</a></td></tr>' . "\n";
+            $output .= "<tr$style><td>" . esc_html($row->ChapterName) . "</td><td>" . esc_html(ns_format_unit($row->UnitType, $row->UnitNumberInt, $row->UnitDesignator)) . '</td><td>' . esc_html($row->NumReports) . '</td><td>' . esc_html($reported) . '</td><td>' . esc_html($submitted) . '</td><td>' . esc_html($row->AdditionalInfo) . '<td><a href="#" onClick="ue_merge_submit(' . "'" . esc_html($row->ChapterName) . "','" . esc_html($row->UnitType) . "','" . esc_html($row->UnitNumberInt) . "','" . esc_html($row->UnitDesignator) . "'" . ');">Process this unit</a></td></tr>' . "\n";
             $count++;
         }
     }
