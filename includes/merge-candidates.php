@@ -132,7 +132,7 @@ function ue_merge_submit(chapter, unittype, unitnum, unitdesig) {
         $reported = $row->NumCandidatesReported;
         if (!($submitted)) { $submitted = 0; }
         if ($reported == 0) {
-            $output .= "<tr$style><td>" . esc_html($row->ChapterName) . '</td><td style="white-space: nowrap;">' . esc_html(ns_format_unit($row->UnitType, $row->UnitNumberInt, $row->UnitDesignator)) . '</td><td>' . esc_html($row->NumReports) . '</td><td>' . esc_html($reported) . '</td><td>' . esc_html($submitted) . '</td><td>' . esc_html($row->AdditionalInfo) . '<td><a href="#" onClick="ue_merge_submit(' . "'" . esc_html($row->ChapterName) . "','" . esc_html($row->UnitType) . "','" . esc_html($row->UnitNumberInt) . "','" . esc_html($row->UnitDesignator) . "'" . ');">Process this unit</a></td></tr>' . "\n";
+            $output .= "<tr$style><td>" . esc_html($row->ChapterName) . '</td><td style="white-space: nowrap;">' . esc_html(ns_format_unit($row->UnitType, $row->UnitNumberInt, $row->UnitDesignator)) . '</td><td>' . esc_html($row->NumReports) . '</td><td>' . esc_html($reported) . '</td><td>' . esc_html($submitted) . '</td><td>' . esc_html($row->AdditionalInfo) . '<td style="white-space: nowrap"><a href="#" onClick="ue_merge_submit(' . "'" . esc_html($row->ChapterName) . "','" . esc_html($row->UnitType) . "','" . esc_html($row->UnitNumberInt) . "','" . esc_html($row->UnitDesignator) . "'" . ');">Process this unit</a></td></tr>' . "\n";
             $count++;
         }
     }
