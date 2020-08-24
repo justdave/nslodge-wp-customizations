@@ -55,7 +55,7 @@ $j(document).ready(function(){
             success : function( response ) {
                 num_allowed = 0;
                 if (response.num_candidates > 0) {
-                    num_allowed = Math.ceil(response.num_candidates / 3);
+                    num_allowed = Math.ceil(response.num_candidates * 2 / 3);
                 }
                 num_nominations = response.num_nominations - response.leader_nominated;
                 adults_remaining = num_allowed - num_nominations;

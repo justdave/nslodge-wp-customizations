@@ -193,7 +193,7 @@ function ue_adult_submit(chapter, unittype, unitnum, unitdesig, bsaid) {
     foreach ($units as $unit) {
         $style = "";
         $elected = $unit['youth_elected'];
-        $allowed = ceil($elected/3);
+        $allowed = ceil($elected * 2 / 3);
         if ((0 == $elected) && (isset($unit['report_pending']))) {
             $elected = "(report pending)";
         }
