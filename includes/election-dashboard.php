@@ -173,7 +173,7 @@ ORDER BY unit.chapter_num, unit.unit_type, unit.unit_num, unit.unit_desig
         $data[$row->chapter][$unit]['num_reports'] = $row->num_reports;
         $data[$row->chapter][$unit]['num_reqs'] = $row->num_reqs;
         $data[$row->chapter][$unit]['num_reported'] = $row->num_reported;
-        $data[$row->chapter][$unit]['num_submitted'] = $row->num_submited;
+        $data[$row->chapter][$unit]['num_submitted'] = $row->num_submitted;
         $data[$row->chapter][$unit]['num_certified'] = $row->num_certified;
         $data[$row->chapter][$unit]['scheduled'] = 0;
         $data[$row->chapter][$unit]['election_date'] = '';
