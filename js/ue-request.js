@@ -37,11 +37,13 @@ $j(document).ready(function(){
   $j('#tell_or_schedule').change(function (){
       val = $j('input[name="tell_or_schedule"]:checked').val();
       if (val == "I need to request an election") {
-          $j('#form-tell').hide();
-          $j('#form-schedule').show();
+          $j('#form-tell').slideUp(500);
+          $j('#form-schedule').slideDown(500);
+          $j('#form-both').slideDown(500);
       } else {
-          $j('#form-tell').show();
-          $j('#form-schedule').hide();
+          $j('#form-tell').slideDown(500);
+          $j('#form-schedule').slideUp(500);
+          $j('#form-both').slideDown(500);
       }
   });
   $j('input[name="e-date-0"]').change(function() {
@@ -50,6 +52,17 @@ $j(document).ready(function(){
       $j('input[name="e-date-2"]').val(val);
       $j('input[name="e-date-3"]').val(val);
   });
+  // Also run this at page load in case they reload the page with it already selected
+  val = $j('input[name="tell_or_schedule"]:checked').val();
+  if (val == "I need to request an election") {
+      $j('#form-tell').hide();
+      $j('#form-schedule').show();
+      $j('#form-both').show();
+  } else if (val == "I need to tell you about an already scheduled election") {
+      $j('#form-tell').show();
+      $j('#form-schedule').hide();
+      $j('#form-both').show();
+  }
 });
 
 function change_troop(){
