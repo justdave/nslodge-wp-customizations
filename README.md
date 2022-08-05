@@ -1,3 +1,5 @@
+THE WEBSITE THIS IS FOR NO LONGER EXISTS, SO THIS PROJECT IS NOW CLOSED.  Archived for historical reference.
+
 === NSLodge Custom Stuff ===  
 Contributors: Dave Miller
 Tags: order of the arrow, BSA, OA, boy scouts  
